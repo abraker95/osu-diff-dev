@@ -2,17 +2,20 @@ from tkinter import *
 import time
 import sys
 import analyse
+from winsound import PlaySound, SND_FILENAME, SND_ASYNC, SND_NOSTOP
 
 
 # Function to be used to initialize the timer.
 
 def first_load():
     # Variable relative_time is the time when the user has clicked the button to start timer.
-    global relative_time, ms, realtime_canvas, user_data
+    global relative_time, ms, ms_values, realtime_canvas, user_data, sound_list
 
     user_data     = []
     ms            = 0
     relative_time = int(round(time.time() * 1000)) + 2000
+
+    sound_list = [x[0] for x in ms_values if x[1][-1].isupper()]
 
     tick()
 
@@ -21,7 +24,7 @@ def first_load():
 
 def tick():
     # Variable ms is the time that constantly goes up during the timer.
-    global ms, ms_values, realtime_canvas, results, user_data
+    global ms, ms_values, realtime_canvas, results, user_data, sound_list
     time_label.after(30, tick)
     ms = int(round(time.time() * 1000)) - relative_time
     time_label["text"] = "Timer: {}ms".format(ms)
@@ -34,13 +37,22 @@ def tick():
 
     draw_pulses(ms, ms_values, realtime_canvas)
 
+    sound_list = play_sounds(sound_list, ms)
+
+def play_sounds(sound_list, time):
+    return_sound_list = sound_list
+    for i in sound_list:
+        if time > i-100:
+            return_sound_list = sound_list[1:]
+            PlaySound("tick.wav", SND_FILENAME|SND_ASYNC)
+    return return_sound_list
 
 def draw_pulses(time, pattern, canvas):
     judgeline_ypos   = 372  # px from top
     judgeline_height = 6    # px
     
     # ms/px
-    scale = 0.7
+    scale = 0.5
 
     # px
     note_height = 20
@@ -59,12 +71,13 @@ def draw_pulses(time, pattern, canvas):
     def right(): return column_x_offset + column_seperation
 
     for note in pattern:
-        note_xpos = left() if note[1] == "l" else right()
+        note_xpos = left() if note[1].lower() == "l" else right()
         fill_color = "#dddddd"
         
         if time + t_start > note[0] > time - t_end:
             if time + t_judge > note[0] > time - t_judge:
                 fill_color = "#ff0000"
+                print("{} {}".format(note[1], note[0]))
             
             x1 = note_xpos
             y1 = (t_start - note[0] + time)*scale
@@ -75,11 +88,11 @@ def draw_pulses(time, pattern, canvas):
 
 
 def generate_pattern(pattern_string):
-    pattern = []
+    pattern      = []
     split_string = pattern_string.split("|")[1]
+
     for i in range(len(split_string)):
-        if split_string[i] == "l": pattern.append((i, "l"))
-        if split_string[i] == "r": pattern.append((i, "r"))
+        if split_string[i] in ["l", "r", "L", "R"]: pattern.append([i, split_string[i]])
 
     return pattern
 
@@ -91,7 +104,7 @@ def generate_ms_values(pattern, meter, end):
     for bpm in range(120, 185, 5):
         local_bpm_list = pattern
         ms_between = 60000 / (bpm * meter)
-        local_bpm_list = [(x[0]*ms_between + last_end, x[1]) for x in local_bpm_list]
+        local_bpm_list = [[x[0]*ms_between + last_end, x[1]] for x in local_bpm_list]
         last_end += total_length * ms_between
         pattern_list += local_bpm_list
 

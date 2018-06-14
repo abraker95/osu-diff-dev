@@ -8,8 +8,12 @@ def order_messed(user, pattern):
     for i in current_pattern:
         current_pattern = current_pattern[1:]
         current_user = current_user[1:]
-        if not (abs(current_pattern[0][0] - current_user[0][0]) < 200 and current_pattern[0][1] == current_user[0][1]):
+        if len(current_pattern) == 0 or len(current_user) == 0: return [[[-1]]]
+
+        if not (abs(current_pattern[0][0] - current_user[0][0]) < 200
+                and current_pattern[0][1].lower() == current_user[0][1]):
             errors += 1
+
         if errors == 3:
             if len(current_user) > 10:
                 user_error = current_user[0:10]
@@ -29,7 +33,7 @@ def show_hit_error_plot(user, pattern):
     messing_up_index = min(len(pattern), len(user))
 
     for i in range(min(len(pattern), len(user))):
-        if pattern[i][1] != user[i][1]:
+        if pattern[i][1].lower() != user[i][1]:
             errors += 1
         if errors == 3:
             messing_up_index = i
