@@ -28,22 +28,49 @@ def tick():
 
     realtime_canvas.delete("all")
 
-    realtime_canvas.create_rectangle(0, 372, 500, 378, fill="#00ff00")
+    judgeline_ypos   = 372 # px from top
+    judgeline_height = 6   # px
+    realtime_canvas.create_rectangle(0, judgeline_ypos, 500, judgeline_ypos + judgeline_height, fill="#00ff00")
 
     draw_pulses(ms, ms_values, realtime_canvas)
 
 
 def draw_pulses(time, pattern, canvas):
-    for i in pattern:
-        left_x = 75 if i[1] == "l" else 325
+    judgeline_ypos   = 372  # px from top
+    judgeline_height = 6    # px
+    
+    # ms/px
+    scale = 0.7
+
+    # px
+    note_height = 20
+    note_width  = 100
+    
+    # ms from judge line
+    t_start = judgeline_ypos/scale
+    t_end   = 0
+    t_judge = 50
+
+
+    column_seperation = 100 # px the left side and right side are sepreated by
+    column_x_offset   = 200  # px the column are move to the right
+
+    def left():  return column_x_offset - column_seperation
+    def right(): return column_x_offset + column_seperation
+
+    for note in pattern:
+        note_xpos = left() if note[1] == "l" else right()
         fill_color = "#dddddd"
-        if time + 1500 > i[0] > time - 500:
-            if time + 50 > i[0] > time - 50:
+        
+        if time + t_start > note[0] > time - t_end:
+            if time + t_judge > note[0] > time - t_judge:
                 fill_color = "#ff0000"
-            x1 = left_x
-            y1 = 500 - (i[0] - time + 500) / 4 - 3
-            x2 = x1 + 100
-            y2 = y1 + 6
+            
+            x1 = note_xpos
+            y1 = (t_start - note[0] + time)*scale
+            x2 = x1 + note_width
+            y2 = y1 + note_height
+            
             canvas.create_rectangle(x1, y1, x2, y2, fill=fill_color)
 
 
