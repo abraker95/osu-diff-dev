@@ -144,7 +144,12 @@ while True:
     user_data  = []
     error_list = []
 
-    patterns_file  = open("patterns.txt", 'r', encoding="utf-8")
+    try: patterns_file  = open("patterns.txt", 'r', encoding="utf-8")
+    except FileNotFoundError as e:
+        print(str(e))
+        print('If the file really exist, make sure you are you running gui.py from within the folder it is? cd inside of it if not')
+        exit(-1 )
+
     patterns_lines = [line.rstrip('\n') for line in patterns_file]
 
     pattern = generate_pattern(patterns_lines[0])
