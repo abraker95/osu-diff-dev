@@ -9,9 +9,10 @@ from winsound import PlaySound, SND_FILENAME, SND_ASYNC, SND_NOSTOP
 
 def first_load():
     # Variable relative_time is the time when the user has clicked the button to start timer.
-    global relative_time, ms, ms_values, realtime_canvas, user_data, sound_list, user_can_input
+    global relative_time, ms, ms_values, realtime_canvas, user_data, sound_list, user_can_input, id_pattern
 
     user_data      = []
+    id_pattern = patterns_lines[0].split("|")[0]
     ms             = 0
     relative_time  = int(round(time.time() * 1000)) + 2000
     user_can_input = True
@@ -95,9 +96,10 @@ def draw_pulses(time, pattern, canvas):
 
 
 def generate_pattern(pattern_string):
+    global id_pattern
     pattern      = []
-    split_string = pattern_string.split("|")[1]
-
+    split_string = pattern_string.split("|")[2]
+    
     for i in range(len(split_string)):
         if split_string[i] in ["l", "r", "L", "R"]: pattern.append([i, split_string[i]])
 
@@ -144,29 +146,35 @@ def kill():
     sys.exit()
 
 def send_results():
+    global user_data, id_pattern
     nickname = user_entry.get()
-    print(nickname)
 
     if(nickname != ""):
-        try: user_file  = open("user_data.txt", 'r', encoding="utf-8")
-        except FileNotFoundError as e:
-            print(str(e))
-            print('If the file really exist, make sure you are you running gui.py from within the folder it is? cd inside of it if not')
-            exit(-1 )
-
-        user_lines = [line.rstrip('\n') for line in user_file]
-
-        for i, line in user_lines:
-            if(nickname in user_lines):
-                print("Username found.")
+        if user_data:
+            try: user_file = open("user_data.txt", 'a', encoding="utf-8")
+            except FileNotFoundError as e:
+                print(str(e))
+                print('If the file really exist, make sure you are you running gui.py from within the folder it is? cd inside of it if not')
+                exit(-1)
+            datas = ""
+            for data in user_data:
+                datas += ":" + str(data[0]) + data[1]
+            user_file.write("\n" + nickname + ":" + id_pattern + datas)
+            print("Saved !")
+            user_data = []
+        else:
+            print("You have to start before sending infos")
+        
+        
 
     else:
-        print("Nickname can't be empty : " + nickname)
+        print("Nickname can't be empty")
     
 
 while True:
     Tk().withdraw()
-
+    
+    user_can_input = False
     ms         = 0
     user_data  = []
     error_list = []
@@ -180,16 +188,17 @@ while True:
     patterns_lines = [line.rstrip('\n') for line in patterns_file]
 
     pattern = generate_pattern(patterns_lines[0])
-    meter   = int(patterns_lines[0].split("|")[0])
-    end     = len(patterns_lines[0].split("|")[1])
+
+    meter   = int(patterns_lines[0].split("|")[1])
+    end     = len(patterns_lines[0].split("|")[2])
 
     ms_values = generate_ms_values(pattern, meter, end)
 
     root = Tk()
     root.title("Rhythm Data Collecting")
 
-    root.bind("z", record_left)
-    root.bind("x", record_right)
+    root.bind("x", record_left)
+    root.bind("c", record_right)
 
     time_label = Label(root, fg="black")
     time_label.pack()
