@@ -144,10 +144,9 @@ def kill():
     sys.exit()
 
 def send_results():
+    nickname = user_entry.get()
+    print(nickname)
 
-    print(v)
-
-    nickname = v.get()
     if(nickname != ""):
         try: user_file  = open("user_data.txt", 'r', encoding="utf-8")
         except FileNotFoundError as e:
@@ -200,7 +199,8 @@ while True:
     v = StringVar()
 
     Label(root, fg="black", text="Insert your nickname").pack()
-    Entry(root, textvariable = v).pack()
+    user_entry = Entry(root)
+    user_entry.pack()
     
     Button(root, fg="blue", text="Start!", command=first_load).pack()
     
