@@ -41,8 +41,9 @@ def tick():
 
 def play_sounds(sound_list, time):
     return_sound_list = sound_list
+    offset            = -100
     for i in sound_list:
-        if time > i-100:
+        if time > i+offset:
             return_sound_list = sound_list[1:]
             PlaySound("tick.wav", SND_FILENAME|SND_ASYNC)
     return return_sound_list
@@ -77,7 +78,6 @@ def draw_pulses(time, pattern, canvas):
         if time + t_start > note[0] > time - t_end:
             if time + t_judge > note[0] > time - t_judge:
                 fill_color = "#ff0000"
-                print("{} {}".format(note[1], note[0]))
             
             x1 = note_xpos
             y1 = (t_start - note[0] + time)*scale
@@ -137,6 +137,8 @@ def kill():
     sys.exit()
 
 def send_results():
+
+    print(v)
 
     nickname = v.get()
     if(nickname != ""):
