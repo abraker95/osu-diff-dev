@@ -136,6 +136,25 @@ def show_results():
 def kill():
     sys.exit()
 
+def send_results():
+
+    nickname = v.get()
+    if(nickname != ""):
+        try: user_file  = open("user_data.txt", 'r', encoding="utf-8")
+        except FileNotFoundError as e:
+            print(str(e))
+            print('If the file really exist, make sure you are you running gui.py from within the folder it is? cd inside of it if not')
+            exit(-1 )
+
+        user_lines = [line.rstrip('\n') for line in user_file]
+
+        for i, line in user_lines:
+            if(nickname in user_lines):
+                print("Username found.")
+
+    else:
+        print("Nickname can't be empty : " + nickname)
+    
 
 while True:
     Tk().withdraw()
@@ -169,8 +188,13 @@ while True:
 
     Label(root, fg="red", text="Use z/x to tap pattern.").pack()
 
-    Button(root, fg="blue", text="Start!", command=first_load).pack()
+    v = StringVar()
 
+    Label(root, fg="black", text="Insert your nickname").pack()
+    Entry(root, textvariable = v).pack()
+    
+    Button(root, fg="blue", text="Start!", command=first_load).pack()
+    
     realtime_canvas = Canvas(root, width=500, height=500)
     realtime_canvas.pack()
 
@@ -178,6 +202,7 @@ while True:
     results.pack()
 
     Button(root, fg="red", text="Show Results", command=show_results).pack()
+    Button(root, fg="red", text="Send Results", command=send_results).pack()
 
     # If window is closed, stop the program.
     root.protocol("WM_DELETE_WINDOW", kill)
