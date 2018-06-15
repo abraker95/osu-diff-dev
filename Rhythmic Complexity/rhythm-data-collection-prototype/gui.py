@@ -9,35 +9,42 @@ from winsound import PlaySound, SND_FILENAME, SND_ASYNC, SND_NOSTOP
 
 def first_load():
     # Variable relative_time is the time when the user has clicked the button to start timer.
-    global relative_time, ms, ms_values, realtime_canvas, user_data, sound_list
+    global relative_time, ms, ms_values, realtime_canvas, user_data, sound_list, user_can_input
 
-    user_data     = []
-    ms            = 0
-    relative_time = int(round(time.time() * 1000)) + 2000
+    user_data      = []
+    ms             = 0
+    relative_time  = int(round(time.time() * 1000)) + 2000
+    user_can_input = True
 
     sound_list = [x[0] for x in ms_values if x[1][-1].isupper()]
 
     tick()
-
+                                             
 
 # Function to be used to run the timer and update the real time stuff
 
 def tick():
     # Variable ms is the time that constantly goes up during the timer.
-    global ms, ms_values, realtime_canvas, results, user_data, sound_list
+    global ms, ms_values, realtime_canvas, results, user_data, sound_list, user_can_input
     time_label.after(30, tick)
     ms = int(round(time.time() * 1000)) - relative_time
     time_label["text"] = "Timer: {}ms".format(ms)
 
     realtime_canvas.delete("all")
 
+    if ms > ms_values[-1][0]:  # User can't input once pattern ends.
+        user_can_input = False
+
+    if analyse.order_messed(user_data, ms_values) != -1:  # User can't input if they mess up.
+        user_can_input = False
+
     judgeline_ypos   = 372 # px from top
     judgeline_height = 6   # px
     realtime_canvas.create_rectangle(0, judgeline_ypos, 500, judgeline_ypos + judgeline_height, fill="#00ff00")
 
-    draw_pulses(ms, ms_values, realtime_canvas)
-
-    sound_list = play_sounds(sound_list, ms)
+    if user_can_input:
+        draw_pulses(ms, ms_values, realtime_canvas)
+        sound_list = play_sounds(sound_list, ms)
 
 def play_sounds(sound_list, time):
     return_sound_list = sound_list
@@ -112,19 +119,19 @@ def generate_ms_values(pattern, meter, end):
 
 
 def record_left(e):
-    global ms, user_data
-    user_data.append((ms, "l"))
+    global ms, user_data, ms_values, user_can_input
+    if user_can_input: user_data.append((ms, "l"))
 
 
 def record_right(e):
-    global ms, user_data
-    user_data.append((ms, "r"))
+    global ms, user_data, ms_values, user_can_input
+    if user_can_input: user_data.append((ms, "r"))
 
 
 def show_results():
     global user_data, ms_values, results, error_list
 
-    error = analyse.order_messed(user_data, ms_values)[0][0][0]
+    error = analyse.order_messed(user_data, ms_values)
 
     print(error)
     analyse.show_hit_error_plot(user_data, ms_values)
