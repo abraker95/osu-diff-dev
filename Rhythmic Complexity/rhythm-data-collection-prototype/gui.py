@@ -153,12 +153,10 @@ def draw_hiterror_bar(canvas):
  
 
 def generate_pattern(pattern_string):
-    global id_pattern
-    pattern      = []
-    split_string = pattern_string.split("|")[4]
-    
-    for i in range(len(split_string)):
-        if split_string[i] in ["l", "r", "L", "R"]: pattern.append([i, split_string[i]])
+    pattern = []
+
+    for i in range(len(pattern_string)):
+        if pattern_string[i] in ["l", "r", "L", "R"]: pattern.append([i, pattern_string[i]])
 
     return pattern
 
@@ -168,10 +166,10 @@ def generate_ms_values(pattern, meter, end, start_bpm, end_bpm):
     total_length = end
     pattern_list = []
 
+    # Increment by 5 BPM
     for bpm in range(start_bpm, end_bpm+5, 5):
-        local_bpm_list = pattern
         ms_between = 60000 / (bpm * meter)
-        local_bpm_list = [[x[0]*ms_between + last_end, x[1]] for x in local_bpm_list]
+        local_bpm_list = [[x[0]*ms_between + last_end, x[1]] for x in pattern]
         last_end += total_length * ms_between
         pattern_list += local_bpm_list
 
@@ -247,13 +245,19 @@ while True:
         exit(-1 )
 
     patterns_lines = [line.rstrip('\n') for line in patterns_file]
-    pattern = generate_pattern(patterns_lines[0])
+    pattern_param  = patterns_lines[0].split("|")
 
-    meter     = int(patterns_lines[0].split("|")[1])
-    end       = len(patterns_lines[0].split("|")[4])
-    start_bpm = int(patterns_lines[0].split("|")[2])
-    end_bpm   = int(patterns_lines[0].split("|")[3])
+    meter     = int(pattern_param[1])
+    start_bpm = int(pattern_param[2])
+    end_bpm   = int(pattern_param[3])
+    pattern   = pattern_param[4]
+    end       = len(pattern_param[4])
 
+    if len(pattern) == 0:
+        print('No pattern loaded! Check patterns.txt')
+        exit(-1 )
+
+    pattern = generate_pattern(pattern)
     pattern_data = generate_ms_values(pattern, meter, end, start_bpm, end_bpm)
 
     root = Tk()
