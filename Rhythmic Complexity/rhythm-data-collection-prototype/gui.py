@@ -12,12 +12,11 @@ def first_load():
     global relative_time, ms, ms_values, realtime_canvas, user_data, sound_list, user_can_input, id_pattern
 
     user_data      = []
-    id_pattern = patterns_lines[0].split("|")[0]
+    id_pattern     = patterns_lines[0].split("|")[0]
     ms             = 0
     relative_time  = int(round(time.time() * 1000)) + 2000
     user_can_input = True
-
-    sound_list = [x[0] for x in ms_values if x[1][-1].isupper()]
+    sound_list     = [x[0] for x in ms_values if x[1][-1].isupper()]
 
     tick()
                                              
@@ -27,17 +26,18 @@ def first_load():
 def tick():
     # Variable ms is the time that constantly goes up during the timer.
     global ms, ms_values, realtime_canvas, results, user_data, sound_list, user_can_input
+    
     time_label.after(30, tick)
     ms = int(round(time.time() * 1000)) - relative_time
     time_label["text"] = "Timer: {}ms".format(ms)
 
     realtime_canvas.delete("all")
 
-    if ms > ms_values[-1][0]:  # User can't input once pattern ends.
-        user_can_input = False
+    pattern_ended  = (ms > ms_values[-1][0])
+    user_messed_up = (analyse.order_messed(user_data, ms_values) != -1)
 
-    if analyse.order_messed(user_data, ms_values) != -1:  # User can't input if they mess up.
-        user_can_input = False
+    # User can't input once pattern ends and can't input if they mess up.
+    if pattern_ended or user_messed_up: user_can_input = False
 
     judgeline_ypos   = 372 # px from top
     judgeline_height = 6   # px
@@ -47,14 +47,18 @@ def tick():
         draw_pulses(ms, ms_values, realtime_canvas)
         sound_list = play_sounds(sound_list, ms)
 
+
 def play_sounds(sound_list, time):
     return_sound_list = sound_list
     offset            = -100
+
     for i in sound_list:
         if time > i+offset:
             return_sound_list = sound_list[1:]
             PlaySound("tick.wav", SND_FILENAME|SND_ASYNC)
+
     return return_sound_list
+
 
 def draw_pulses(time, pattern, canvas):
     judgeline_ypos   = 372  # px from top
@@ -71,7 +75,6 @@ def draw_pulses(time, pattern, canvas):
     t_start = judgeline_ypos/scale
     t_end   = 0
     t_judge = 50
-
 
     column_seperation = 100 # px the left side and right side are sepreated by
     column_x_offset   = 200  # px the column are move to the right
@@ -110,6 +113,7 @@ def generate_ms_values(pattern, meter, end):
     last_end     = 0
     total_length = end
     pattern_list = []
+
     for bpm in range(120, 185, 5):
         local_bpm_list = pattern
         ms_between = 60000 / (bpm * meter)
@@ -134,51 +138,53 @@ def show_results():
     global user_data, ms_values, results, error_list
 
     error = analyse.order_messed(user_data, ms_values)
-
     print(error)
+
     analyse.show_hit_error_plot(user_data, ms_values)
     error_list.append(error)
     print(error_list)
 
-# Function used to kill the program entirely.
 
+# Function used to kill the program entirely.
 def kill():
     sys.exit()
+
 
 def send_results():
     global user_data, id_pattern
     nickname = user_entry.get()
 
-    if(nickname != ""):
-        if user_data:
-            try: user_file = open("user_data.txt", 'a', encoding="utf-8")
-            except FileNotFoundError as e:
-                print(str(e))
-                print('If the file really exist, make sure you are you running gui.py from within the folder it is? cd inside of it if not')
-                exit(-1)
-            datas = ""
-            for data in user_data:
-                # Concatenate every data with ':' + ms + key
-                datas += ":" + str(data[0]) + data[1]
-            user_file.write("\n" + nickname + ":" + id_pattern + datas)
-            print("Saved !")
-            user_data = []
-        else:
-            print("You have to start before sending infos")
-        
-        
-
-    else:
+    if nickname == "":
         print("Nickname can't be empty")
+        return
+
+    if not user_data:
+        print("You have to start before sending infos")
+        return
+
+    try: user_file = open("user_data.txt", 'a', encoding="utf-8")
+    except FileNotFoundError as e:
+        print(str(e))
+        print('If the file really exist, make sure you are you running gui.py from within the folder it is? cd inside of it if not')
+        exit(-1)
+
+    datas = ""
+    for data in user_data:
+        # Concatenate every data with ':' + ms + key
+        datas += ":" + str(data[0]) + data[1]
+
+    user_file.write("\n" + nickname + ":" + id_pattern + datas)
+    user_data = []
+    print("Saved !")
     
 
 while True:
     Tk().withdraw()
     
     user_can_input = False
-    ms         = 0
-    user_data  = []
-    error_list = []
+    ms             = 0
+    user_data      = []
+    error_list     = []
 
     try: patterns_file  = open("patterns.txt", 'r', encoding="utf-8")
     except FileNotFoundError as e:
@@ -187,11 +193,10 @@ while True:
         exit(-1 )
 
     patterns_lines = [line.rstrip('\n') for line in patterns_file]
-
     pattern = generate_pattern(patterns_lines[0])
 
-    meter   = int(patterns_lines[0].split("|")[1])
-    end     = len(patterns_lines[0].split("|")[2])
+    meter = int(patterns_lines[0].split("|")[1])
+    end   = len(patterns_lines[0].split("|")[2])
 
     ms_values = generate_ms_values(pattern, meter, end)
 
@@ -225,5 +230,4 @@ while True:
 
     # If window is closed, stop the program.
     root.protocol("WM_DELETE_WINDOW", kill)
-
     root.mainloop()
