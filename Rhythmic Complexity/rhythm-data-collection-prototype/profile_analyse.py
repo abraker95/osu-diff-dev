@@ -1,12 +1,11 @@
 import matplotlib.pyplot as plt
 
+
 def get_pattern(idpattern):
-    try:
-        patterns_file = open("patterns.txt", 'r', encoding="utf-8")
+    try: patterns_file = open("patterns.txt", 'r', encoding="utf-8")
     except FileNotFoundError as e:
         print(str(e))
-        print(
-            'If the file really exist, make sure you are you running gui.py from within the folder it is? cd inside of it if not')
+        print('If the file really exist, make sure you are you running gui.py from within the folder it is? cd inside of it if not')
         exit(-1)
 
     patterns_lines = [pattern.rstrip('\n') for pattern in patterns_file]
@@ -23,7 +22,6 @@ def get_hit_errors(idpattern, lines):
     hit_errors = []
 
     pattern_string, meter, start_bpm, end_bpm = get_pattern(idpattern)
-
     pattern_list = []
 
     for i in range(len(pattern_string)):
@@ -61,12 +59,11 @@ def get_hit_errors(idpattern, lines):
 
 def get_profiles(name, idpattern):
     profile = []
-    try:
-        user_file = open("user_data.txt", 'r', encoding="utf-8")
+
+    try: user_file = open("user_data.txt", 'r', encoding="utf-8")
     except FileNotFoundError as e:
         print(str(e))
-        print(
-            'If the file really exist, make sure you are you running gui.py from within the folder it is? cd inside of it if not')
+        print('If the file really exist, make sure you are you running gui.py from within the folder it is? cd inside of it if not')
         exit(-1)
 
     user_lines = [line.rstrip('\n') for line in user_file]
@@ -76,10 +73,8 @@ def get_profiles(name, idpattern):
 
     for line in user_lines:
         if (line.split(":")[0] == name and int(line.split(":")[1]) == idpattern):
-            # Get the last value and remove l/r
-            number = line.split(":")[-1][:-1]
-            # Keep it on a list
-            losingpoints.append(int(number))
+            number = line.split(":")[-1][:-1] # Get the last value and remove l/r
+            losingpoints.append(int(number))  # Keep it on a list
 
     # Do an average at the end
     averagevalue = sum(losingpoints) / len(losingpoints)
