@@ -15,7 +15,7 @@ def get_profiles(name, idpattern):
 
     for line in user_lines:
         # Something strange with the if
-        if(line.split(":")[0] == name and line.split(":")[1] == idpattern):
+        if(line.split(":")[0] == name and int(line.split(":")[1]) == idpattern):
             # Get the last value
             number = line.split[line.count(':')]
             # Remove the l or r
