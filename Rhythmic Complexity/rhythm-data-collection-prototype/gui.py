@@ -9,7 +9,7 @@ from winsound import PlaySound, SND_FILENAME, SND_ASYNC, SND_NOSTOP
 
 def first_load():
     # Variable relative_time is the time when the user has clicked the button to start timer.
-    global relative_time, ms, ms_values, realtime_canvas, user_data, sound_list, user_can_input, id_pattern
+    global relative_time, note_hits, ms, ms_values, realtime_canvas, user_data, sound_list, user_can_input, id_pattern
 
     user_data      = []
     id_pattern     = patterns_lines[0].split("|")[0]
@@ -46,6 +46,22 @@ def tick():
     if user_can_input:
         draw_pulses(ms, ms_values, realtime_canvas)
         sound_list = play_sounds(sound_list, ms)
+
+    # Hit error bar draw parameters
+    hit_error_draw_offset = 250
+    hit_error_scale       = 0.2
+    hit_error_thickness   = 2
+
+    # Draw the 0ms hit error reference point
+    realtime_canvas.create_rectangle(hit_error_draw_offset, 440, hit_error_draw_offset + hit_error_thickness, 450, fill="#0000ff")
+
+    # Draw the hit error ticks
+    hit_errors = analyse.get_hit_errors(user_data, ms_values)
+    if hit_errors:
+        for hit_error in hit_errors:
+            xpos = hit_error*hit_error_scale + hit_error_draw_offset
+            realtime_canvas.create_rectangle(xpos, 450, xpos + hit_error_thickness, 500, fill="#ffffff")
+    
 
 
 def play_sounds(sound_list, time):
