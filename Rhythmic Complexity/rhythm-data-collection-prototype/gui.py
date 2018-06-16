@@ -46,49 +46,13 @@ def tick():
     if not user_can_input: ms = 0
     time_label["text"] = "Timer: {}ms".format(ms)
 
-    # Set judgeline color to red if user can input, green if user can't input
-    if user_can_input: judgeline_color = "#00ff00"
-    else:              judgeline_color = "#ff0000"
-    judgeline_ypos   = 372 # px from top
-    judgeline_height = 6   # px
-    realtime_canvas.create_rectangle(0, judgeline_ypos, 500, judgeline_ypos + judgeline_height, fill=judgeline_color)
+    draw_judgeline(realtime_canvas, user_can_input)
 
     if user_can_input:
-        draw_pulses(ms, pattern_data, realtime_canvas)
+        draw_pulses(realtime_canvas, ms, pattern_data)
         sound_list = play_sounds(sound_list, ms)
 
-    # Hit error bar draw parameters
-    hit_error_draw_offset = 250
-    hit_error_scale       = 1.5
-    hit_error_thickness   = 2
-
-    # Draw the 0ms hit error reference point
-    realtime_canvas.create_rectangle(hit_error_draw_offset, 440, hit_error_draw_offset + hit_error_thickness, 450, fill="#0000ff")
-
-    # Draw the 50 hit window.
-    realtime_canvas.create_rectangle(hit_error_draw_offset - hit_error_scale*129.5,
-                                     450,
-                                     hit_error_draw_offset + hit_error_scale*129.5,
-                                     500, fill="#FE9A2E")
-
-    # Draw the 100 hit window.
-    realtime_canvas.create_rectangle(hit_error_draw_offset - hit_error_scale * 83.5,
-                                     450,
-                                     hit_error_draw_offset + hit_error_scale * 83.5,
-                                     500, fill="#2EFE2E")
-
-    # Draw the 300 hit window.
-    realtime_canvas.create_rectangle(hit_error_draw_offset - hit_error_scale * 37.5,
-                                     450,
-                                     hit_error_draw_offset + hit_error_scale * 37.5,
-                                     500, fill="#00FFFF")
-
-    # Draw the hit error ticks
-    hit_errors = analyse.get_hit_errors(user_data, pattern_data)
-    if hit_errors:
-        for hit_error in hit_errors:
-            xpos = hit_error*hit_error_scale + hit_error_draw_offset
-            realtime_canvas.create_rectangle(xpos, 450, xpos + hit_error_thickness, 500, fill="#ffffff")
+    draw_hiterror_bar(realtime_canvas)
 
 
 def play_sounds(sound_list, time):
@@ -103,12 +67,12 @@ def play_sounds(sound_list, time):
     return return_sound_list
 
 
-def draw_pulses(time, pattern, canvas):
+def draw_pulses(canvas, time, pattern):
     judgeline_ypos   = 372  # px from top
     judgeline_height = 6    # px
     
     # ms/px
-    scale = 0.5
+    scale = 0.7
 
     # px
     note_height = 20
@@ -140,6 +104,53 @@ def draw_pulses(time, pattern, canvas):
             
             canvas.create_rectangle(x1, y1, x2, y2, fill=fill_color)
 
+
+def draw_judgeline(canvas, user_can_input):
+    # Set judgeline color to red if user can input, green if user can't input
+    if user_can_input: judgeline_color = "#00ff00"
+    else:              judgeline_color = "#ff0000"
+
+    # Judgeline draw parameters
+    judgeline_ypos   = 372 # px from top
+    judgeline_height = 6   # px
+
+    canvas.create_rectangle(0, judgeline_ypos, 500, judgeline_ypos + judgeline_height, fill=judgeline_color)
+    
+
+def draw_hiterror_bar(canvas):
+    # Hit error bar draw parameters
+    hit_error_draw_offset = 250
+    hit_error_scale       = 1.5
+    hit_error_thickness   = 2
+
+    # Draw the 0ms hit error reference point
+    canvas.create_rectangle(hit_error_draw_offset, 440, hit_error_draw_offset + hit_error_thickness, 450, fill="#0000ff")
+
+    # Draw the 50 hit window.
+    canvas.create_rectangle(hit_error_draw_offset - hit_error_scale*129.5,
+                                     450,
+                                     hit_error_draw_offset + hit_error_scale*129.5,
+                                     500, fill="#FE9A2E")
+
+    # Draw the 100 hit window.
+    canvas.create_rectangle(hit_error_draw_offset - hit_error_scale * 83.5,
+                                     450,
+                                     hit_error_draw_offset + hit_error_scale * 83.5,
+                                     500, fill="#2EFE2E")
+
+    # Draw the 300 hit window.
+    canvas.create_rectangle(hit_error_draw_offset - hit_error_scale * 37.5,
+                                     450,
+                                     hit_error_draw_offset + hit_error_scale * 37.5,
+                                     500, fill="#00FFFF")
+
+    # Draw the hit error ticks
+    hit_errors = analyse.get_hit_errors(user_data, pattern_data)
+    if hit_errors:
+        for hit_error in hit_errors:
+            xpos = hit_error*hit_error_scale + hit_error_draw_offset
+            canvas.create_rectangle(xpos, 450, xpos + hit_error_thickness, 500, fill="#ffffff")
+ 
 
 def generate_pattern(pattern_string):
     global id_pattern
@@ -255,7 +266,6 @@ while True:
     time_label.pack()
 
     Label(root, fg="red", text="Use x/c to tap pattern.").pack()
-
     Label(root, fg="black", text="Insert your nickname").pack()
 
     user_entry = Entry(root)
