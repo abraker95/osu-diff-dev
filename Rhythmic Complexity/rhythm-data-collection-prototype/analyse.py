@@ -35,22 +35,21 @@ def get_hit_errors(hits, pattern, max_hits=10):
     return hit_errors
 
 
-def order_messed(user, pattern):
+def get_user_fail(user, pattern, current_time):
     errors = 0
-    current_user    = user
-    current_pattern = pattern
 
-    for i in current_pattern:
-        current_pattern = current_pattern[1:]
-        current_user = current_user[1:]
-        if len(current_pattern) == 0 or len(current_user) == 0: return -1
+    if len(user) == 0 and current_time > pattern[2][0]: return 0
 
-        if not (abs(current_pattern[0][0] - current_user[0][0]) < 200
-                and current_pattern[0][1].lower() == current_user[0][1]):
-            errors += 1
+    if len(user) > 0:
+        for i in range(min(len(pattern), len(user))):
+            if not (abs(pattern[i][0] - user[i][0]) < 129.5
+                    and pattern[i][1].lower() == user[i][1]):
+                errors += 1
 
-        if errors == 3:
-            return current_user[0][0]
+            if errors == 3:
+                return user[0][0]
+
+    return pattern[-1][0]
 
 
 def show_hit_error_plot(user, pattern):
