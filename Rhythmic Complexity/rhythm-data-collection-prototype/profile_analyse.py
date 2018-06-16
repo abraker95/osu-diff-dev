@@ -14,18 +14,16 @@ def get_profiles(name, idpattern):
     losingpoints = []
 
     for line in user_lines:
-        # Something strange with the if
         if(line.split(":")[0] == name and int(line.split(":")[1]) == idpattern):
             # Get the last value
-            number = line.split[line.count(':')]
+            number = line.split(":")[-1]
             # Remove the l or r
             number.replace("l", "").replace("r", "")
             # Keep it on a list
             losingpoints.append(int(number))
-            # Do a sum up with previous one to...
-            averagevalue += int(number)
+            
     # Do an average at the end
-    averagevalue = averagevalue / len(losingpoints)
+    averagevalue = sum(losingpoints) / len(losingpoints)
 
     # Insert value and return it
     profile.append(averagevalue, losingpoints)
