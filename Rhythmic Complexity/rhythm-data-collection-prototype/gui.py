@@ -158,6 +158,7 @@ def send_results():
                 exit(-1)
             datas = ""
             for data in user_data:
+                # Concatenate every data with ':' + ms + key
                 datas += ":" + str(data[0]) + data[1]
             user_file.write("\n" + nickname + ":" + id_pattern + datas)
             print("Saved !")
