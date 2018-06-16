@@ -118,6 +118,6 @@ def show_graphs(user, losingpoints, hit_error):
     plt.show()
 
 # Test
-profile = get_profiles("MBmasher", 1)
+profile = get_profiles("Arrcival", 2)
 
 show_graphs(profile[0], profile[2], profile[3])
