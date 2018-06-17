@@ -25,7 +25,7 @@ def first_load():
 
 def tick():
     # Variable ms is the time that constantly goes up during the timer.
-    global ms, pattern_data, realtime_canvas, user_data, sound_list, user_can_input, user_entry
+    global ms, pattern_data, realtime_canvas, user_data, sound_list, user_can_input
     
     time_label.after(30, tick)
     ms = int(round(time.time() * 1000)) - relative_time
@@ -37,10 +37,6 @@ def tick():
 
     # User can't input once pattern ends and can't input if they mess up.
     if pattern_ended or user_messed_up: user_can_input = False
-
-    # Disable text box if pattern is going
-    if user_can_input: user_entry.config(state=DISABLED)
-    else:              user_entry.config(state=NORMAL)
 
     # Set timer to 0 if user can't input
     if not user_can_input: ms = 0
