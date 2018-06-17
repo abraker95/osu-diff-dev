@@ -7,7 +7,7 @@ from winsound import PlaySound, SND_FILENAME, SND_ASYNC
 
 # Function to be used to initialize the timer.
 
-def first_load():
+def start_action():
     # Variable relative_time is the time when the user has clicked the button to start timer.
     global relative_time, note_hits, ms, pattern_data, realtime_canvas, user_data, sound_list, user_can_input, id_pattern
 
@@ -293,7 +293,7 @@ while True:
     validate_username_botton = Button(root, fg="red", text="Validate Username", command=disable_entry)
     validate_username_botton.pack()
 
-    start_button = Button(root, fg="blue", text="Start!", state=DISABLED, command=first_load)
+    start_button = Button(root, fg="blue", text="Start!", command=start_action)
     start_button.pack()
     
     realtime_canvas = Canvas(root, width=500, height=500)
