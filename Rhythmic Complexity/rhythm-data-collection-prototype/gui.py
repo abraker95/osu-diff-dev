@@ -2,7 +2,7 @@ from tkinter import *
 import time
 import sys
 import analyse
-from winsound import PlaySound, SND_FILENAME, SND_ASYNC, SND_NOSTOP
+from winsound import PlaySound, SND_FILENAME, SND_ASYNC
 
 
 # Function to be used to initialize the timer.
@@ -197,6 +197,11 @@ def show_results():
     print(error_list)
 
 
+def disable_entry():
+    global user_entry
+    user_entry['state'] = DISABLED
+
+
 # Function used to kill the program entirely.
 def kill():
     sys.exit()
@@ -274,6 +279,8 @@ while True:
 
     user_entry = Entry(root)
     user_entry.pack()
+    
+    Button(root, fg="red", text="Validate Username", command=disable_entry).pack()
     
     Button(root, fg="blue", text="Start!", command=first_load).pack()
     
