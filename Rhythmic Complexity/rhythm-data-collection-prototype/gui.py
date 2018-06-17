@@ -192,8 +192,12 @@ def show_results():
 
 
 def disable_entry():
-    global user_entry
+    global user_entry, validate_username_botton, start_button
     user_entry['state'] = DISABLED
+    validate_username_botton.pack_forget()
+
+    start_button['state'] = NORMAL
+
 
 
 # Function used to kill the program entirely.
@@ -226,8 +230,8 @@ def send_results():
 
     user_file.write("\n" + nickname + ":" + id_pattern + datas)
     user_data = []
-    print("Saved !")
-    
+    print("Saved !")    
+
 
 while True:
     Tk().withdraw()
@@ -267,14 +271,20 @@ while True:
     time_label = Label(root, fg="black")
     time_label.pack()
 
-    Label(root, fg="red", text="Use x/c to tap pattern.").pack()
+    keys_label = Label(root, fg="red", text="Use x/c to tap pattern.")
+    keys_label.pack()
+
+    # Username input
     Label(root, fg="black", text="Insert your nickname").pack()
 
     user_entry = Entry(root)
     user_entry.pack()
     
-    Button(root, fg="red", text="Validate Username", command=disable_entry).pack()
-    Button(root, fg="blue", text="Start!", command=first_load).pack()
+    validate_username_botton = Button(root, fg="red", text="Validate Username", command=disable_entry)
+    validate_username_botton.pack()
+
+    start_button = Button(root, fg="blue", text="Start!", state=DISABLED, command=first_load)
+    start_button.pack()
     
     realtime_canvas = Canvas(root, width=500, height=500)
     realtime_canvas.pack()
