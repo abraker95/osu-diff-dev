@@ -274,6 +274,16 @@ while True:
     keys_label = Label(root, fg="red", text="Use x/c to tap pattern.")
     keys_label.pack()
 
+    # BPM input
+    bpm_frame = Frame(root)
+
+    Label(bpm_frame, fg="black", text="Enter pattern BPM: ").pack(side="left")
+
+    bpm_entry = Entry(bpm_frame)
+    bpm_entry.pack()
+
+    bpm_frame.pack()
+
     # Username input
     Label(root, fg="black", text="Insert your nickname").pack()
 
