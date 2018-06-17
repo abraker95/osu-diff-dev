@@ -22,7 +22,19 @@ def start_action():
     bpm_entry['state']  = DISABLED
 
     tick()
-                                             
+
+
+def process_test_end():
+    global user_can_input, ms, time_label, bpm_entry
+    user_can_input = False
+
+    # Set timer to 0 if user can't input
+    ms = 0
+    time_label["text"] = "Timer: {}ms".format(ms)
+
+    # enable BPM setting
+    bpm_entry['state']  = NORMAL
+
 
 # Function to be used to run the timer and update the real time stuff
 
@@ -30,21 +42,18 @@ def tick():
     # Variable ms is the time that constantly goes up during the timer.
     global ms, pattern_data, realtime_canvas, user_data, sound_list, user_can_input
     
+    # Update the clock
     time_label.after(30, tick)
     ms = int(round(time.time() * 1000)) - relative_time
 
+    # Clear the convas to redraw everything
     realtime_canvas.delete("all")
 
+    # Determine whether to end the test
     pattern_ended  = (ms > pattern_data[-1][0])
     user_messed_up = (analyse.get_user_fail(user_data, pattern_data, ms) != pattern_data[-1][0])
-
-    # User can't input once pattern ends and can't input if they mess up.
-    if pattern_ended or user_messed_up: user_can_input = False
-
-    # Set timer to 0 if user can't input
-    if not user_can_input: ms = 0
-    time_label["text"] = "Timer: {}ms".format(ms)
-
+    if pattern_ended or user_messed_up: process_test_end()
+        
     draw_judgeline(realtime_canvas, user_can_input)
 
     if user_can_input:
