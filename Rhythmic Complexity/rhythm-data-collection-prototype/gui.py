@@ -4,19 +4,26 @@ import sys
 import analyse
 from winsound import PlaySound, SND_FILENAME, SND_ASYNC
 
+from pattern_reader import read_pattern_file, read_pattern, generate_ms_values
+
 
 # Function to be used to initialize the timer.
-
 def start_action():
     # Variable relative_time is the time when the user has clicked the button to start timer.
-    global relative_time, note_hits, ms, pattern_data, realtime_canvas, user_data, sound_list, user_can_input, id_pattern, user_entry, bpm_entry
+    global relative_time, note_hits, ms, realtime_canvas, user_data, sound_list, user_can_input, id_pattern, user_entry, bpm_entry, generated_pattern
+
+    id_pattern, meter, repeat, pattern_string, total_length = read_pattern_file("patterns.txt")
+    try: bpm = float(bpm_entry.get())
+    except: bpm = 180
+
+    raw_pattern = read_pattern(pattern_string)
+    generated_pattern = generate_ms_values(meter, repeat, raw_pattern, total_length, bpm)
 
     user_data      = []
-    id_pattern     = patterns_lines[0].split("|")[0]
     ms             = 0
     relative_time  = int(round(time.time() * 1000)) + 2000
     user_can_input = True
-    sound_list     = [x[0] for x in pattern_data if x[1][-1].isupper()]
+    sound_list     = [x[0] for x in generated_pattern if x[1][-1].isupper()]
 
     user_entry['state'] = DISABLED
     bpm_entry['state']  = DISABLED
@@ -40,7 +47,7 @@ def process_test_end():
 
 def tick():
     # Variable ms is the time that constantly goes up during the timer.
-    global ms, pattern_data, realtime_canvas, user_data, sound_list, user_can_input
+    global ms, generated_pattern, realtime_canvas, user_data, sound_list, user_can_input
     
     # Update the clock
     time_label.after(30, tick)
@@ -50,14 +57,14 @@ def tick():
     realtime_canvas.delete("all")
 
     # Determine whether to end the test
-    pattern_ended  = (ms > pattern_data[-1][0])
-    user_messed_up = (analyse.get_user_fail(user_data, pattern_data, ms) != pattern_data[-1][0])
+    pattern_ended  = (ms > generated_pattern[-1][0])
+    user_messed_up = (analyse.get_user_fail(user_data, generated_pattern, ms) != generated_pattern[-1][0])
     if pattern_ended or user_messed_up: process_test_end()
         
     draw_judgeline(realtime_canvas, user_can_input)
 
     if user_can_input:
-        draw_pulses(realtime_canvas, ms, pattern_data)
+        draw_pulses(realtime_canvas, ms, generated_pattern)
         sound_list = play_sounds(sound_list, ms)
 
     draw_hiterror_bar(realtime_canvas)
@@ -153,52 +160,30 @@ def draw_hiterror_bar(canvas):
                                      500, fill="#00FFFF")
 
     # Draw the hit error ticks
-    hit_errors = analyse.get_hit_errors(user_data, pattern_data)
+    hit_errors = analyse.get_hit_errors(user_data, generated_pattern)
     if hit_errors:
         for hit_error in hit_errors:
             xpos = hit_error*hit_error_scale + hit_error_draw_offset
             canvas.create_rectangle(xpos, 450, xpos + hit_error_thickness, 500, fill="#ffffff")
  
 
-def generate_pattern(pattern_string):
-    pattern = []
-
-    for i in range(len(pattern_string)):
-        if pattern_string[i] in ["l", "r", "L", "R"]: pattern.append([i, pattern_string[i]])
-
-    return pattern
-
-
-def generate_ms_values(meter, repeat, pattern, total_length):
-    last_end     = 0    # Keeps track the end of the last repeat
-    pattern_list = []   # Final, processed, notes
-    bpm          = 180
-    ms_between   = 60000 / (bpm * meter)
-
-    for i in range(repeat):
-        pattern_list += [[x[0]*ms_between + last_end, x[1]] for x in pattern]
-        last_end += total_length * ms_between
-
-    return pattern_list
-
-
 def record_left(e):
-    global ms, user_data, pattern_data, user_can_input
+    global ms, user_data, user_can_input
     if user_can_input: user_data.append((ms, "l"))
 
 
 def record_right(e):
-    global ms, user_data, pattern_data, user_can_input
+    global ms, user_data, user_can_input
     if user_can_input: user_data.append((ms, "r"))
 
 
 def show_results():
-    global user_data, pattern_data, error_list
+    global user_data, generated_pattern, error_list
 
-    error = analyse.get_user_fail(user_data, pattern_data, pattern_data[-1][0])
+    error = analyse.get_user_fail(user_data, generated_pattern, generated_pattern[-1][0])
     print(error)
 
-    analyse.show_hit_error_plot(user_data, pattern_data)
+    analyse.show_hit_error_plot(user_data, generated_pattern)
     error_list.append(error)
     print(error_list)
 
@@ -214,6 +199,7 @@ def send_results():
 
     if nickname == "":
         print("Nickname can't be empty")
+        user_entry['state'] = NORMAL
         return
 
     if not user_data:
@@ -244,26 +230,7 @@ while True:
     user_data      = []
     error_list     = []
 
-    try: patterns_file  = open("patterns.txt", 'r', encoding="utf-8")
-    except FileNotFoundError as e:
-        print(str(e))
-        print('If the file really exist, make sure you are you running gui.py from within the folder it is? cd inside of it if not')
-        exit(-1 )
-
-    patterns_lines = [line.rstrip('\n') for line in patterns_file]
-    pattern_param  = patterns_lines[0].split("|")
-
-    meter        = int(pattern_param[1])
-    repeat       = int(pattern_param[2])
-    pattern      = pattern_param[3]
-    total_length = len(pattern_param[3])
-
-    if len(pattern) == 0:
-        print('No pattern loaded! Check patterns.txt')
-        exit(-1 )
-
-    pattern = generate_pattern(pattern)
-    pattern_data = generate_ms_values(meter, repeat, pattern, total_length)
+    read_pattern_file("patterns.txt")
 
     root = Tk()
     root.title("Rhythm Data Collecting")
