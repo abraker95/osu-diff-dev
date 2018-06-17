@@ -157,17 +157,15 @@ def generate_pattern(pattern_string):
     return pattern
 
 
-def generate_ms_values(pattern, meter, end, start_bpm, end_bpm):
-    last_end     = 0
-    total_length = end
-    pattern_list = []
+def generate_ms_values(meter, repeat, pattern, total_length):
+    last_end     = 0    # Keeps track the end of the last repeat
+    pattern_list = []   # Final, processed, notes
+    bpm          = 180
+    ms_between   = 60000 / (bpm * meter)
 
-    # Increment by 5 BPM
-    for bpm in range(start_bpm, end_bpm+5, 5):
-        ms_between = 60000 / (bpm * meter)
-        local_bpm_list = [[x[0]*ms_between + last_end, x[1]] for x in pattern]
+    for i in range(repeat):
+        pattern_list += [[x[0]*ms_between + last_end, x[1]] for x in pattern]
         last_end += total_length * ms_between
-        pattern_list += local_bpm_list
 
     return pattern_list
 
@@ -248,18 +246,17 @@ while True:
     patterns_lines = [line.rstrip('\n') for line in patterns_file]
     pattern_param  = patterns_lines[0].split("|")
 
-    meter     = int(pattern_param[1])
-    start_bpm = int(pattern_param[2])
-    end_bpm   = int(pattern_param[3])
-    pattern   = pattern_param[4]
-    end       = len(pattern_param[4])
+    meter        = int(pattern_param[1])
+    repeat       = int(pattern_param[2])
+    pattern      = pattern_param[3]
+    total_length = len(pattern_param[3])
 
     if len(pattern) == 0:
         print('No pattern loaded! Check patterns.txt')
         exit(-1 )
 
     pattern = generate_pattern(pattern)
-    pattern_data = generate_ms_values(pattern, meter, end, start_bpm, end_bpm)
+    pattern_data = generate_ms_values(meter, repeat, pattern, total_length)
 
     root = Tk()
     root.title("Rhythm Data Collecting")
