@@ -9,7 +9,7 @@ from winsound import PlaySound, SND_FILENAME, SND_ASYNC
 
 def start_action():
     # Variable relative_time is the time when the user has clicked the button to start timer.
-    global relative_time, note_hits, ms, pattern_data, realtime_canvas, user_data, sound_list, user_can_input, id_pattern
+    global relative_time, note_hits, ms, pattern_data, realtime_canvas, user_data, sound_list, user_can_input, id_pattern, user_entry, bpm_entry
 
     user_data      = []
     id_pattern     = patterns_lines[0].split("|")[0]
@@ -17,6 +17,9 @@ def start_action():
     relative_time  = int(round(time.time() * 1000)) + 2000
     user_can_input = True
     sound_list     = [x[0] for x in pattern_data if x[1][-1].isupper()]
+
+    user_entry['state'] = DISABLED
+    bpm_entry['state']  = DISABLED
 
     tick()
                                              
@@ -191,15 +194,6 @@ def show_results():
     print(error_list)
 
 
-def disable_entry():
-    global user_entry, validate_username_botton, start_button
-    user_entry['state'] = DISABLED
-    validate_username_botton.pack_forget()
-
-    start_button['state'] = NORMAL
-
-
-
 # Function used to kill the program entirely.
 def kill():
     sys.exit()
@@ -285,13 +279,14 @@ while True:
     bpm_frame.pack()
 
     # Username input
-    Label(root, fg="black", text="Insert your nickname").pack()
+    username_frame = Frame(root)
 
-    user_entry = Entry(root)
-    user_entry.pack()
-    
-    validate_username_botton = Button(root, fg="red", text="Validate Username", command=disable_entry)
-    validate_username_botton.pack()
+    Label(username_frame, fg="black", text="Username: ").pack(side="left")
+
+    user_entry = Entry(username_frame)
+    user_entry.pack(side="right")
+
+    username_frame.pack()
 
     start_button = Button(root, fg="blue", text="Start!", command=start_action)
     start_button.pack()
