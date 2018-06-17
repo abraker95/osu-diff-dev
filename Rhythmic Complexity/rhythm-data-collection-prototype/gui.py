@@ -274,7 +274,6 @@ while True:
     user_entry.pack()
     
     Button(root, fg="red", text="Validate Username", command=disable_entry).pack()
-    
     Button(root, fg="blue", text="Start!", command=first_load).pack()
     
     realtime_canvas = Canvas(root, width=500, height=500)
@@ -282,8 +281,10 @@ while True:
 
     results = Label(root, text="^ This is the timing window. ^\nAny taps out of this range count as an error\nThis is the hit error bar for OD7.", fg="black").pack()
 
-    Button(root, fg="red", text="Show Results", command=show_results).pack()
-    Button(root, fg="red", text="Send Results", command=send_results).pack()
+    button_frame = Frame(root)
+    Button(button_frame, fg="red", text="Show Results", command=show_results).pack(side="left")
+    Button(button_frame, fg="red", text="Send Results", command=send_results).pack(side="right")
+    button_frame.pack()
 
     # If window is closed, stop the program.
     root.protocol("WM_DELETE_WINDOW", kill)
