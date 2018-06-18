@@ -1,13 +1,12 @@
 import matplotlib.pyplot as plt
 
+
 '''
 # @param hits:     list of hit timings the user made on the notes
 # @param pattern:  list of note timings the user attempts to make hits on
 # @param max_hits: look at the last N hits
 # @return: A list of max_hits size containing hit errors between the user's hit timing and note's timing
 '''
-
-
 def get_hit_errors(hits, pattern, max_hits=10):
     if len(hits) == 0: return []
     hit_errors = []
@@ -35,33 +34,33 @@ def get_hit_errors(hits, pattern, max_hits=10):
     return hit_errors
 
 
-def get_user_fail(user, pattern, current_time):
+def get_user_fail(user_data, pattern, current_time):
     errors = 0
 
     # If the user hasn't made an input and the pattern has reached its 3rd note, fail.
-    if len(user) == 0 and current_time > pattern[2][0]: return 0
+    if len(user_data) == 0 and current_time > pattern[2][0]: return 0
 
-    if len(user) > 0:
-        for i in range(min(len(pattern), len(user))):
+    if len(user_data) > 0:
+        for i in range(min(len(pattern), len(user_data))):
             # If the user is out of the timing window,
             # or their finger pattern doesn't match the pattern given, it is an error.
 
             max_hit_window = 129.5  # ms
 
-            in_timing_window          = (abs(pattern[i][0] - user[i][0]) < max_hit_window)
-            pattern_placement_correct = (pattern[i][1].lower() == user[i][1])
+            in_timing_window          = (abs(pattern[i][0] - user_data[i][0]) < max_hit_window)
+            pattern_placement_correct = (pattern[i][1].lower() == user_data[i][1])
 
             if not (in_timing_window and pattern_placement_correct):
                 errors += 1
 
             # The user fails once they hit 3 errors.
             if errors == 3:
-                return user[0][0]
+                return user_data[0][0]
 
     # If the user hasn't made an input in a while, fail.
     inactivity_time = 500  # ms
-    if len(user) > 0:
-        if user[-1][0] < current_time-500: return user[-1][0]
+    if len(user_data) > 0:
+        if user_data[-1][0] < current_time-500: return user_data[-1][0]
 
     return pattern[-1][0]
 
