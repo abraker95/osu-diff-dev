@@ -57,11 +57,6 @@ def get_user_fail(user_data, pattern, current_time):
             if errors == 3:
                 return user_data[0][0]
 
-    # If the user hasn't made an input in a while, fail.
-    inactivity_time = 500  # ms
-    if len(user_data) > 0:
-        if user_data[-1][0] < current_time-500: return user_data[-1][0]
-
     return pattern[-1][0]
 
 
