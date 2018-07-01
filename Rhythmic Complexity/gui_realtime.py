@@ -2,6 +2,7 @@ from tkinter import filedialog
 from tkinter import *
 import find_complexity
 import beatmap_parser
+import pattern_reader
 import numpy
 import time
 import sys
@@ -56,12 +57,12 @@ def draw_graph(time, pulse_list, weight_list, bottom_y):
     fill_color = "#ff0000"
 
     draw_list_indexes = [i for i in range(len(pulse_list)) if time + 1000 > pulse_list[i] > time - 1000]
-    draw_list = [weight_list[3][i] for i in draw_list_indexes if i < len(weight_list[3])]
+    draw_list = [weight_list[1][i] for i in draw_list_indexes if i < len(weight_list[1])]
     draw_coords = []
 
     for i, j in zip(draw_list, draw_list_indexes):
         x = (1000 + pulse_list[j] - time) / 4
-        y = (bottom_y - 200) + (200 - 200 * (i / max(weight_list[3]))) + 3
+        y = (bottom_y - 200) + (200 - 200 * (i / max(weight_list[1]))) + 3
         draw_coords.append((x, y))
 
     for i in range(len(draw_coords) - 1):
@@ -76,14 +77,14 @@ def draw_graph(time, pulse_list, weight_list, bottom_y):
     if len(draw_list_indexes) != 0:
         if draw_list_indexes[0] > 0:
             x = (1000 + pulse_list[draw_list_indexes[0] - 1] - time) / 4
-            y = (bottom_y - 200) + (200 - 200 * (weight_list[3][draw_list_indexes[0] - 1] / max(weight_list[3]))) + 3
+            y = (bottom_y - 200) + (200 - 200 * (weight_list[1][draw_list_indexes[0] - 1] / max(weight_list[1]))) + 3
 
             realtime_graph.create_line(x, y,
                                        draw_coords[0][0], draw_coords[0][1], fill=fill_color)
 
         if draw_list_indexes[-1] < len(pulse_list):
             x = (1000 + pulse_list[draw_list_indexes[-1] + 1] - time) / 4
-            y = (bottom_y - 200) + (200 - 200 * (weight_list[3][draw_list_indexes[-1] + 1] / max(weight_list[3]))) + 3
+            y = (bottom_y - 200) + (200 - 200 * (weight_list[1][draw_list_indexes[-1] + 1] / max(weight_list[1]))) + 3
 
             realtime_graph.create_line(x, y,
                                        draw_coords[-1][0], draw_coords[-1][1], fill=fill_color)
@@ -104,6 +105,9 @@ def kill():
 
 while True:
     Tk().withdraw()
+
+    ''' for beatmap input
+    
     osu_file_path = filedialog.askopenfilename(title="Select an osu file", filetypes=(("osu files", "*.osu"),))
 
     osu_file = open(osu_file_path, 'r', encoding="utf-8")
@@ -114,6 +118,19 @@ while True:
     map_times = beatmap_parser.return_times(map_lines)
     left_times, right_times = find_complexity.find_finger_placement(map_times)
     left_weights, right_weights = find_complexity.abraker_triplet(map_times)
+    '''
+
+    pattern_file_path = filedialog.askopenfilename(title="Select an pattern file", filetypes=(("text files", "*.txt"),))
+
+    pattern_data   = pattern_reader.read_pattern_file(pattern_file_path)
+    meter          = pattern_data[1]
+    repeat         = pattern_data[2]
+    pattern_string = pattern_data[3]
+    total_length   = pattern_data[4]
+    bpm            = 180
+
+    left_times, right_times = pattern_reader.generate_ms_values(meter, repeat, pattern_string, total_length, bpm)
+    left_weights, right_weights = find_complexity.abraker_triplet(left_times, right_times)
 
     root = Tk()
     root.title("Weighted Objects")

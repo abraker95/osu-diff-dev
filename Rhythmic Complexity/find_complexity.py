@@ -29,6 +29,8 @@ def find_finger_placement(input_rhythm):
 
 
 def evaluate_rhythm(pulses):
+    ''' old algorithm
+
     offset_weights = []
     speed_bonuses = []
 
@@ -48,13 +50,28 @@ def evaluate_rhythm(pulses):
         offset_weights.append(offset_weight)
 
     final_weights = [ offset_weights[i]*speed_bonuses[i] for i in range(len(speed_bonuses) - 1) ]
-
     '''
+
+    ''' debug thing?
+    
     for i, j, k in zip(speed_bonuses, meters, pulses):
         print("{} | {} | {}".format(i, j, k))
     '''
 
-    return [offset_weights, pulses, speed_bonuses, final_weights]
+    speed_list = [1/(pulses[i+1] - pulses[i]) for i in range(len(pulses)-1)]
+    accel_list = [1] + [speed_list[i+1] / speed_list[i] for i in range(len(speed_list)-1)]
+    final_weights = [0.5]
+    change_factor = 2
+    for i in range(len(accel_list)):
+        old_strain = final_weights[-1]
+        accel = accel_list[i]
+        speed = speed_list[i]
+        final_weights.append(0.5 * old_strain * ((accel*speed/old_strain)**change_factor) + 0.5)
+
+    for i in range(len(accel_list)):
+        print("{:2f} {:2f}".format(speed_list[i], accel_list[i]))
+
+    return [pulses, final_weights]
 
 def determine_difficulty(left_weights, right_weights):
     final_weights = left_weights + right_weights
@@ -64,9 +81,7 @@ def determine_difficulty(left_weights, right_weights):
 
     return final_difficulty
 
-def abraker_triplet(rhythms):
-    left_pulses, right_pulses = find_finger_placement(rhythms)
-
+def abraker_triplet(left_pulses, right_pulses):
     left_finger = evaluate_rhythm(left_pulses)
     right_finger = evaluate_rhythm(right_pulses)
 
@@ -80,5 +95,4 @@ def abraker_triplet(rhythms):
 chatting space
 
 so how far is the code updated with the stuff from repl?
-The strains are calculated differently. We got rid of meter, added speed bonus, and added the determine difficulty function
 '''
