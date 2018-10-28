@@ -11,7 +11,7 @@ def interval(index, list):
 
 # Find a total map value based on its list of difficulty values
 def total_difficulty(difficulty_list):
-    sorted_difficulty_list  = sorted(difficulty_list, reverse=True)
+    sorted_difficulty_list   = sorted(difficulty_list, reverse=True)
     weighted_difficulty_list = [sorted_difficulty_list[i] * 0.95 ** i for i in
                                 range(len(sorted_difficulty_list))]
 
