@@ -65,8 +65,8 @@ def rate_change_difficulty(pattern_list):
                        (1 - eq(interval(i - 1, pattern_list), interval(i - 2, pattern_list), 0.09)) *
                        (eq(interval(i - 2, pattern_list), interval(i - 3, pattern_list), 0.09)))
 
-        A = 100
-        B = 0.1
+        A = 140
+        B = 1.25
         C = 1
 
         difficulty = (A / interval(i, pattern_list) +
