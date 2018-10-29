@@ -182,7 +182,13 @@ osu_lines     = [line.rstrip('\n') for line in osu_file]
 mp3_name      = beatmap_parser.mp3_name(osu_lines)
 mp3_file_path = "/".join(osu_file_path.split("/")[:-1]) + "/{}".format(mp3_name)
 
-time_list       = beatmap_parser.file_times(osu_lines)
+time_list = beatmap_parser.file_times(osu_lines)
+
+delay_list, difficulty_list, delay_difficulty_list                  = diff_calc.delay_difficulty(time_list)
+rate_change_list, rate_difficulty_list, rate_change_difficulty_list = diff_calc.rate_change_difficulty(time_list)
+
+total_delay_difficulty       = diff_calc.total_difficulty(delay_difficulty_list)
+total_rate_change_difficulty = diff_calc.total_difficulty(rate_change_difficulty_list)
 
 while True:
     root = Tk()
@@ -201,14 +207,8 @@ while True:
     rate_change_graph_canvas = Canvas(root, width=600, height=200)
     rate_change_graph_canvas.grid(row=3, column=2)
 
-    Label(root, text="Delay Difficulty Graph").grid(row=2, column=0)
-    Label(root, text="Rate Change Difficulty Graph").grid(row=2, column=2)
-
-    delay_list, difficulty_list, delay_difficulty_list                  = diff_calc.delay_difficulty(time_list)
-    rate_change_list, rate_difficulty_list, rate_change_difficulty_list = diff_calc.rate_change_difficulty(time_list)
-
-    total_delay_difficulty       = diff_calc.total_difficulty(delay_difficulty_list)
-    total_rate_change_difficulty = diff_calc.total_difficulty(rate_change_difficulty_list)
+    Label(root, text="Delay Difficulty Graph\n\nPeak Value: {:.4f}".format(max(delay_difficulty_list))).grid(row=2, column=0)
+    Label(root, text="Rate Change Difficulty Graph\n\nPeak Value: {:.4f}".format(max(rate_change_difficulty_list))).grid(row=2, column=2)
 
     Label(root, text="Total Delay Difficulty: {:.4f}\nTotal Rate Change Difficulty: {:.4f}".format(total_delay_difficulty, total_rate_change_difficulty)).grid(row=4, column=1)
 

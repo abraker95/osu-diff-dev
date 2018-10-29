@@ -1,9 +1,27 @@
 import math
+import numpy
 
 
 # Return sameness of two intervals
 def eq(value1, value2, sigma):
+    if value2 == 0:
+        return 1
     return math.e ** -((1-value1/value2) * 1/(2*sigma)) ** 2
+
+# Find S curve using two interval lengths
+def s_curve(interval1, interval2):
+    A = 2/3
+    B = 1
+    C = 0.003
+
+    numpy.power(math.e, B * (interval1 - interval2))
+    numpy.power(math.e, C * (interval1 - interval2))
+
+    strong_s_curve = 1 / (1 + numpy.power(math.e, B * (interval1 - interval2)))
+    weak_s_curve   = 1 / (1 + numpy.power(math.e, C * (interval1 - interval2)))
+    total_s_curve  = A * (strong_s_curve + weak_s_curve)
+
+    return total_s_curve
 
 # Find an interval length
 def interval(index, list):
@@ -40,9 +58,12 @@ def delay_difficulty(pattern_list):
         B = 1.25
         C = 1
 
-        difficulty = (A / interval(i - 2, pattern_list) +
-                      B * interval(i - 2, pattern_list) /
-                      (interval(i - 1, pattern_list) + (interval(i - 2, pattern_list) / C)))
+        if interval(i - 2, pattern_list) == 0 or (interval(i - 1, pattern_list) + (interval(i - 2, pattern_list) / C)) == 0:
+            difficulty = C
+        else:
+            difficulty = (A / interval(i - 2, pattern_list) +
+                          B * interval(i - 2, pattern_list) /
+                          (interval(i - 1, pattern_list) + (interval(i - 2, pattern_list) / C)))
 
         #print("{} {} {} {}: {}".format(pattern_list[i-3], pattern_list[i-2], pattern_list[i-1], pattern_list[i], delay))
 
@@ -65,13 +86,15 @@ def rate_change_difficulty(pattern_list):
                        (1 - eq(interval(i - 1, pattern_list), interval(i - 2, pattern_list), 0.09)) *
                        (eq(interval(i - 2, pattern_list), interval(i - 3, pattern_list), 0.09)))
 
-        A = 140
-        B = 1.25
         C = 1
 
-        difficulty = (A / interval(i, pattern_list) +
-                      B * interval(i - 2, pattern_list) /
-                      (interval(i - 1, pattern_list) + (interval(i - 2, pattern_list) / C)))
+        if interval(i - 1, pattern_list) == 0 or interval(i - 2, pattern_list) == 0:
+            difficulty = C
+        else:
+            s_curve_multiplier = s_curve(interval(i - 1, pattern_list), interval(i - 2, pattern_list))
+            difficulty = (s_curve_multiplier *
+                          (interval(i - 1, pattern_list) / interval(i - 2, pattern_list)) *
+                          abs(math.log(interval(i - 1, pattern_list)) - math.log(interval(i - 2, pattern_list))))
 
         #print("{} {} {} {} {}: {}".format(pattern_list[i - 4], pattern_list[i - 3], pattern_list[i - 2], pattern_list[i - 1], pattern_list[i],
         #                                  rate_change * difficulty))
