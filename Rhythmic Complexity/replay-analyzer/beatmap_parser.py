@@ -48,15 +48,15 @@ def return_hitobject_data(lines, speed_multiplier, hardrock):
     for line in hitobject_lines:
         hitobject_comma_split = line.split(",")
 
-        x    = int(hitobject_comma_split[0])
-        y    = int(hitobject_comma_split[1])
+        x = int(hitobject_comma_split[0])
+        y = int(hitobject_comma_split[1])
 
         if hardrock:
             y = 384 - y
 
         time = int(int(hitobject_comma_split[2]) / speed_multiplier)
 
-        hitobject_data_list.append((x, y, time))
+        if not (int(hitobject_comma_split[3]) & 0b1000): hitobject_data_list.append((x, y, time))
 
     return hitobject_data_list
 

@@ -4,6 +4,7 @@ import beatmap_parser
 import time
 import numpy
 import beatmap_visualiser_data
+import analyze
 from osrparse import parse_replay_file
 from tkinter import filedialog
 from tkinter import *
@@ -19,6 +20,8 @@ def start_map():
 
     tick()
     draw_map()
+
+    analyze.graph_tap_error(tap_time_list, tap_error_list)
 
 # Function used to tick ms counter
 def tick():
@@ -39,7 +42,6 @@ def draw_map():
     offset_y = 50
 
     ar        = beatmap_parser.return_ar(osu_lines, hardrock, easy)
-    cs_radius = beatmap_parser.return_cs_radius(osu_lines, hardrock, easy)
 
     closest_data_index = min(range(len(cumulative_time)), key=lambda i: abs(cumulative_time[i]-ms))
 
@@ -58,8 +60,42 @@ def draw_map():
     map_canvas.create_rectangle(0, 0, 50, 50, fill=left_fill, width=0)
     map_canvas.create_rectangle(50, 0, 100, 50, fill=right_fill, width=0)
 
+    # Draw hit error bar
+    line_x = 325
+    line_y = 500
+    line_h = 50
+    scale  = 2
+
+    line_base_colour = (0, 0, 255)
+    bg_colour        = (240, 240, 240)
+
+    for i, j in zip(tap_time_list[::-1], tap_error_list[::-1]):
+        on_screen_length = 2000
+
+        if i < ms < i + on_screen_length:
+            # Because of Tkinter not allowing RGBA, this shit code exists :)
+            red = line_base_colour[0] + ((ms - i) *
+                                         (bg_colour[0] - line_base_colour[0]) /
+                                         on_screen_length)
+            red = str(hex(int(red)))[2:].zfill(2)
+            green = line_base_colour[1] + ((ms - i) *
+                                           (bg_colour[1] - line_base_colour[1]) /
+                                           on_screen_length)
+            green = str(hex(int(green)))[2:].zfill(2)
+            blue = line_base_colour[2] + ((ms - i) *
+                                          (bg_colour[2] - line_base_colour[2]) /
+                                          on_screen_length)
+            blue = str(hex(int(blue)))[2:].zfill(2)
+
+            line_colour = "#{}{}{}".format(red, green, blue)
+
+            map_canvas.create_line(line_x + scale*j, line_y,
+                                   line_x + scale*j, line_y + line_h,
+                                   fill=line_colour, width=2)
+
+    map_canvas.create_line(line_x, line_y, line_x, line_y + line_h, width=5)
+
     # Draw hit circles
-    hitobject_list      = beatmap_parser.return_hitobject_data(osu_lines, speed_multiplier, hardrock)
     onscreen_hitobjects = beatmap_visualiser_data.return_onscreen_hitobjects(hitobject_list, ar, ms, speed_multiplier)
 
     for hitobject in onscreen_hitobjects[::-1]:
@@ -92,17 +128,40 @@ def draw_map():
     cursor_radius     = 12
     cursors_on_screen = 15
 
+    cursor_base_colour = (100, 100, 255)
+
     for i in range(cursors_on_screen):
         replay_x      = replay_data[max(0, closest_data_index-(cursors_on_screen-i))].x
         replay_y      = replay_data[max(0, closest_data_index-(cursors_on_screen-i))].y
 
         # Because of Tkinter not allowing RGBA, this shit code exists :)
-        opacity = str(hex(int(240 - (120/cursors_on_screen) * i)))[2:]
-        cursor_colour = "#{}f0".format(opacity * 2)
+        red   = cursor_base_colour[0] + ((cursors_on_screen-i) *
+                                         (bg_colour[0] - cursor_base_colour[0]) /
+                                         cursors_on_screen)
+        red   = str(hex(int(red)))[2:]
+        green = cursor_base_colour[1] + ((cursors_on_screen-i) *
+                                         (bg_colour[1] - cursor_base_colour[1]) /
+                                         cursors_on_screen)
+        green = str(hex(int(green)))[2:]
+        blue  = cursor_base_colour[2] + ((cursors_on_screen-i) *
+                                         (bg_colour[2] - cursor_base_colour[2]) /
+                                         cursors_on_screen)
+        blue  = str(hex(int(blue)))[2:]
+        cursor_colour = "#{}{}{}".format(red, green, blue)
 
         map_canvas.create_oval(replay_x + cursor_radius + offset_x, replay_y + cursor_radius + offset_y,
                                replay_x - cursor_radius + offset_x, replay_y - cursor_radius + offset_y,
                                fill=cursor_colour, outline="")
+
+    # Draw tapped places.
+    for i in tap_list:
+        tap_circle_radius      = 3
+        on_screen_length       = 500
+
+        if i[2] < ms < i[2] + on_screen_length:
+            map_canvas.create_oval(i[0] + tap_circle_radius + offset_x, i[1] + tap_circle_radius + offset_y,
+                                   i[0] - tap_circle_radius + offset_x, i[1] - tap_circle_radius + offset_y,
+                                   fill="#000000", outline="")
 
     time_label.after(30, draw_map)
 
@@ -126,24 +185,28 @@ replay_data  = replay_file.play_data
 replay_times = [i.time_since_previous_action for i in replay_data]
 
 speed_multiplier = 1
+
 if "DoubleTime" in replay_mods or "Nightcore" in replay_mods:
     speed_multiplier = 1.5
 if "HalfTime" in replay_mods:
     speed_multiplier = 0.75
 
+hardrock = False
 if "HardRock" in replay_mods:
     hardrock = True
-else:
-    hardrock = False
 
+easy = False
 if "Easy" in replay_mods:
     easy = True
-else:
-    easy = False
 
 cumulative_time = [sum(replay_times[:i]) / speed_multiplier for i in range(len(replay_times))]
 hitobject_list  = beatmap_parser.return_hitobject_data(osu_lines, speed_multiplier, hardrock)
 time_list       = [hitobject_list[2] for hitobject in hitobject_list]
+
+tap_list                      = analyze.find_tap_data(replay_data, speed_multiplier)
+cs_radius                     = beatmap_parser.return_cs_radius(osu_lines, hardrock, easy)
+hitobject_tap_list            = analyze.find_hitobject_tap_data(tap_list, hitobject_list, cs_radius)
+tap_time_list, tap_error_list = analyze.tap_error(hitobject_tap_list, hitobject_list, cs_radius)
 
 mp3 = mutagen.mp3.MP3(mp3_file_path)
 pygame.mixer.init(frequency=int(mp3.info.sample_rate * speed_multiplier))
