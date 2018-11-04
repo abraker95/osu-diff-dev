@@ -83,11 +83,14 @@ def tap_error(hitobject_tap_data, hitobject_list, cs_radius):
 
 # Graph tap error
 def graph_tap_error(time_list, error_list):
+
+    absolute_error_list = [abs(i) for i in error_list]
+
     average_values = 20
 
     graph = plt.figure()
 
-    ax_1 = graph.add_subplot(111)
+    ax_1 = graph.add_subplot(211)
     ax_1.plot(time_list, error_list, color='red', label="Error")
     ax_1.plot(time_list[int(average_values / 2):int(-average_values / 2)],
               [sum(error_list[i:i + average_values]) / average_values for i in
@@ -95,4 +98,22 @@ def graph_tap_error(time_list, error_list):
 
     ax_1.legend(loc="upper right")
 
+    ax_2 = graph.add_subplot(212)
+    ax_2.plot(time_list, absolute_error_list, color='red', label="Absolute Error")
+    ax_2.plot(time_list[int(average_values / 2):int(-average_values / 2)],
+              [sum(absolute_error_list[i:i + average_values]) / average_values for i in
+               range(len(absolute_error_list) - average_values)], color='blue', label="Moving Average")
+
+    ax_2.legend(loc="upper right")
+
     plt.show()
+
+# Check if hitcircle needs to be highlighted
+def hitcircle_highlight(hitobject_time, hitobject_list, error_list, highlight_threshold):
+    for i in range(len(hitobject_list)):
+        hitobject = hitobject_list[i]
+        if hitobject == hitobject_time:
+            error = error_list[i]
+            if abs(error) > highlight_threshold:
+                return True
+    return False

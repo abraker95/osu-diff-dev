@@ -66,11 +66,23 @@ def draw_map():
     line_h = 50
     scale  = 2
 
+    highlight_threshold        = 20
+    highlight_threshold_colour = (100, 255, 100)
+
+    map_canvas.create_rectangle(line_x - scale * highlight_threshold, line_y,
+                                line_x + scale * highlight_threshold, line_y + line_h,
+                                fill="#" + "".join([str(hex(highlight_threshold_colour[i]))[2:].zfill(2)
+                                                    for i in range(len(highlight_threshold_colour))]), outline="")
+
     line_base_colour = (0, 0, 255)
-    bg_colour        = (240, 240, 240)
 
     for i, j in zip(tap_time_list[::-1], tap_error_list[::-1]):
-        on_screen_length = 2000
+        on_screen_length = 3000
+
+        if abs(j) > highlight_threshold:
+            bg_colour = (240, 240, 240)
+        else:
+            bg_colour = highlight_threshold_colour
 
         if i < ms < i + on_screen_length:
             # Because of Tkinter not allowing RGBA, this shit code exists :)
@@ -91,30 +103,56 @@ def draw_map():
 
             map_canvas.create_line(line_x + scale*j, line_y,
                                    line_x + scale*j, line_y + line_h,
-                                   fill=line_colour, width=2)
+                                   fill=line_colour, width=1)
 
-    map_canvas.create_line(line_x, line_y, line_x, line_y + line_h, width=5)
+    map_canvas.create_line(line_x, line_y, line_x, line_y + line_h, width=2)
 
     # Draw hit circles
     onscreen_hitobjects = beatmap_visualiser_data.return_onscreen_hitobjects(hitobject_list, ar, ms, speed_multiplier)
 
+    approachcircle_base_colour = (0, 0, 0)
+    bg_colour                  = (240, 240, 240)
+
     for hitobject in onscreen_hitobjects[::-1]:
+        if (analyze.hitcircle_highlight(hitobject[3], tap_time_list, tap_error_list, highlight_threshold)
+        or hitobject[3] not in tap_time_list):
+            hitcircle_base_colour = (0, 0, 255)
+        else:
+            hitcircle_base_colour = (255, 0, 0)
 
         # Because of Tkinter not allowing RGBA, this shit code exists :)
-        hex_opacity = str(hex(int(255 - hitobject[2] * 255)))[2:]
-        hex_opacity = hex_opacity.zfill(2)
-        fill        = "#ff" + hex_opacity * 2
-        outline     = "#" + hex_opacity * 3
+        hitcircle_red   = bg_colour[0] + ((hitcircle_base_colour[0] - bg_colour[0]) *
+                                          hitobject[2])
+        hitcircle_red   = str(hex(int(hitcircle_red)))[2:].zfill(2)
+        hitcircle_green = bg_colour[1] + ((hitcircle_base_colour[1] - bg_colour[1]) *
+                                          hitobject[2])
+        hitcircle_green = str(hex(int(hitcircle_green)))[2:].zfill(2)
+        hitcircle_blue  = bg_colour[2] + ((hitcircle_base_colour[2] - bg_colour[2]) *
+                                          hitobject[2])
+        hitcircle_blue  = str(hex(int(hitcircle_blue)))[2:].zfill(2)
+
+        approachcircle_red   = bg_colour[0] + ((approachcircle_base_colour[0] - bg_colour[0]) *
+                                               hitobject[2])
+        approachcircle_red   = str(hex(int(approachcircle_red)))[2:].zfill(2)
+        approachcircle_green = bg_colour[1] + ((approachcircle_base_colour[1] - bg_colour[1]) *
+                                               hitobject[2])
+        approachcircle_green = str(hex(int(approachcircle_green)))[2:].zfill(2)
+        approachcircle_blue  = bg_colour[2] + ((approachcircle_base_colour[2] - bg_colour[2]) *
+                                               hitobject[2])
+        approachcircle_blue  = str(hex(int(approachcircle_blue)))[2:].zfill(2)
+
+        hitcircle_colour      = "#{}{}{}".format(hitcircle_red, hitcircle_green, hitcircle_blue)
+        approachcircle_colour = "#{}{}{}".format(approachcircle_red, approachcircle_green, approachcircle_blue)
 
         map_canvas.create_oval(hitobject[0] + cs_radius + offset_x, hitobject[1] + cs_radius + offset_y,
                                hitobject[0] - cs_radius + offset_x, hitobject[1] - cs_radius + offset_y,
-                               fill=fill, outline=outline, width=1)
+                               fill=hitcircle_colour, outline=approachcircle_colour, width=1)
 
     # Draw approach circles
     onscreen_approach_circles = beatmap_visualiser_data.return_onscreen_approach_circles(hitobject_list, ar, cs_radius, ms, speed_multiplier)
+    bg_colour                 = (240, 240, 240)
 
     for hitobject in onscreen_approach_circles[::-1]:
-
         # Because of Tkinter not allowing RGBA, this shit code exists :)
         hex_opacity = str(hex(int(255 - hitobject[3] * 255)))[2:]
         hex_opacity = hex_opacity.zfill(2)
@@ -138,15 +176,15 @@ def draw_map():
         red   = cursor_base_colour[0] + ((cursors_on_screen-i) *
                                          (bg_colour[0] - cursor_base_colour[0]) /
                                          cursors_on_screen)
-        red   = str(hex(int(red)))[2:]
+        red   = str(hex(int(red)))[2:].zfill(2)
         green = cursor_base_colour[1] + ((cursors_on_screen-i) *
                                          (bg_colour[1] - cursor_base_colour[1]) /
                                          cursors_on_screen)
-        green = str(hex(int(green)))[2:]
+        green = str(hex(int(green)))[2:].zfill(2)
         blue  = cursor_base_colour[2] + ((cursors_on_screen-i) *
                                          (bg_colour[2] - cursor_base_colour[2]) /
                                          cursors_on_screen)
-        blue  = str(hex(int(blue)))[2:]
+        blue  = str(hex(int(blue)))[2:].zfill(2)
         cursor_colour = "#{}{}{}".format(red, green, blue)
 
         map_canvas.create_oval(replay_x + cursor_radius + offset_x, replay_y + cursor_radius + offset_y,

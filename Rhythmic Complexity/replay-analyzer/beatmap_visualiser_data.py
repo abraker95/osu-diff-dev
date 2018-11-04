@@ -25,7 +25,7 @@ def return_onscreen_hitobjects(hitobject_list, ar, current_ms, speed_multiplier)
             else:
                 hitobject_opacity = (current_ms - hitobject_start_on_screen) / amount_of_fadein_time
 
-            hitobjects_on_screen.append((hitobject_x, hitobject_y, hitobject_opacity))
+            hitobjects_on_screen.append((hitobject_x, hitobject_y, hitobject_opacity, hitobject_time))
 
     return hitobjects_on_screen
 
