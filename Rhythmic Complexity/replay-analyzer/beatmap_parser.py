@@ -58,6 +58,8 @@ def return_hitobject_data(lines, speed_multiplier, hardrock):
 
         if not (int(hitobject_comma_split[3]) & 0b1000): hitobject_data_list.append((x, y, time))
 
+    hitobject_data_list = stacked_notes(hitobject_data_list)
+
     return hitobject_data_list
 
 # Input is a .osu file, output the AR of that map.
@@ -93,3 +95,38 @@ def mp3_name(lines):
         space_split_line = i.split(" ")
         if space_split_line[0] == "AudioFilename:":
             return " ".join(space_split_line[1:])
+
+# Stack notes.
+def stacked_notes(hitobjects):
+    stack_distance        = 3.65
+    stack_time_threshold  = 1000
+    hitobjects_stack_info = [[i] + [0] for i in hitobjects[::-1]]
+    final_hitobject_list  = []
+
+    for i in range(len(hitobjects_stack_info)):
+        hitobject1 = hitobjects_stack_info[i]
+
+        for j in range(len(hitobjects_stack_info)):
+            hitobject2 = hitobjects_stack_info[j]
+
+            in_stack_time_threshold     = not (hitobject2[0][2] < hitobject1[0][2]
+                                               or hitobject2[0][2] > hitobject1[0][2] + stack_time_threshold)
+            before_stack_time_threshold = hitobject2[0][2] < hitobject1[0][2]
+            same_time                   = hitobject1[0][2] == hitobject2[0][2]
+            same_position               = (hitobject1[0][0] == hitobject2[0][0]
+                                           and hitobject1[0][1] == hitobject2[0][1])
+
+            if in_stack_time_threshold and same_position and not same_time:
+                hitobjects_stack_info[i][1] = hitobjects_stack_info[j][1] + 1
+
+            if before_stack_time_threshold:
+                break
+
+    for i in hitobjects_stack_info[::-1]:
+        stack_amount   = i[1]
+        hitobject_x    = i[0][0] - stack_amount * stack_distance
+        hitobject_y    = i[0][1] - stack_amount * stack_distance
+        hitobject_time = i[0][2]
+        final_hitobject_list.append((hitobject_x, hitobject_y, hitobject_time))
+
+    return final_hitobject_list

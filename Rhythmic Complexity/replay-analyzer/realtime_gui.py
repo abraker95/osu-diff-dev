@@ -21,8 +21,6 @@ def start_map():
     tick()
     draw_map()
 
-    analyze.graph_tap_error(tap_time_list, tap_error_list)
-
 # Function used to tick ms counter
 def tick():
     global relative_time, ms
@@ -66,7 +64,7 @@ def draw_map():
     line_h = 50
     scale  = 2
 
-    highlight_threshold        = 20
+    highlight_threshold        = 15
     highlight_threshold_colour = (100, 255, 100)
 
     map_canvas.create_rectangle(line_x - scale * highlight_threshold, line_y,
@@ -110,13 +108,14 @@ def draw_map():
     # Draw hit circles
     onscreen_hitobjects = beatmap_visualiser_data.return_onscreen_hitobjects(hitobject_list, ar, ms, speed_multiplier)
 
-    approachcircle_base_colour = (0, 0, 0)
-    bg_colour                  = (240, 240, 240)
+    outlinecircle_base_colour = (0, 0, 0)
+    bg_colour                 = (240, 240, 240)
 
     for hitobject in onscreen_hitobjects[::-1]:
-        if (analyze.hitcircle_highlight(hitobject[3], tap_time_list, tap_error_list, highlight_threshold)
-        or hitobject[3] not in tap_time_list):
+        if analyze.hitcircle_highlight(hitobject[3], tap_time_list, tap_error_list, highlight_threshold):
             hitcircle_base_colour = (0, 0, 255)
+        elif hitobject[3] not in tap_time_list:
+            hitcircle_base_colour = (0, 255, 0)
         else:
             hitcircle_base_colour = (255, 0, 0)
 
@@ -131,36 +130,45 @@ def draw_map():
                                           hitobject[2])
         hitcircle_blue  = str(hex(int(hitcircle_blue)))[2:].zfill(2)
 
-        approachcircle_red   = bg_colour[0] + ((approachcircle_base_colour[0] - bg_colour[0]) *
+        outline_red      = bg_colour[0] + ((outlinecircle_base_colour[0] - bg_colour[0]) *
                                                hitobject[2])
-        approachcircle_red   = str(hex(int(approachcircle_red)))[2:].zfill(2)
-        approachcircle_green = bg_colour[1] + ((approachcircle_base_colour[1] - bg_colour[1]) *
+        outline_red      = str(hex(int(outline_red)))[2:].zfill(2)
+        outline_green    = bg_colour[1] + ((outlinecircle_base_colour[1] - bg_colour[1]) *
                                                hitobject[2])
-        approachcircle_green = str(hex(int(approachcircle_green)))[2:].zfill(2)
-        approachcircle_blue  = bg_colour[2] + ((approachcircle_base_colour[2] - bg_colour[2]) *
+        outline_green    = str(hex(int(outline_green)))[2:].zfill(2)
+        outline_blue     = bg_colour[2] + ((outlinecircle_base_colour[2] - bg_colour[2]) *
                                                hitobject[2])
-        approachcircle_blue  = str(hex(int(approachcircle_blue)))[2:].zfill(2)
+        outline_blue     = str(hex(int(outline_blue)))[2:].zfill(2)
 
-        hitcircle_colour      = "#{}{}{}".format(hitcircle_red, hitcircle_green, hitcircle_blue)
-        approachcircle_colour = "#{}{}{}".format(approachcircle_red, approachcircle_green, approachcircle_blue)
+        hitcircle_colour = "#{}{}{}".format(hitcircle_red, hitcircle_green, hitcircle_blue)
+        outline_colour   = "#{}{}{}".format(outline_red, outline_green, outline_blue)
 
         map_canvas.create_oval(hitobject[0] + cs_radius + offset_x, hitobject[1] + cs_radius + offset_y,
                                hitobject[0] - cs_radius + offset_x, hitobject[1] - cs_radius + offset_y,
-                               fill=hitcircle_colour, outline=approachcircle_colour, width=1)
+                               fill=hitcircle_colour, outline=outline_colour, width=1)
 
     # Draw approach circles
-    onscreen_approach_circles = beatmap_visualiser_data.return_onscreen_approach_circles(hitobject_list, ar, cs_radius, ms, speed_multiplier)
-    bg_colour                 = (240, 240, 240)
+    onscreen_approach_circles  = beatmap_visualiser_data.return_onscreen_approach_circles(hitobject_list, ar, cs_radius, ms, speed_multiplier)
+    approachcircle_base_colour = (0, 0, 0)
+    bg_colour                  = (240, 240, 240)
 
     for hitobject in onscreen_approach_circles[::-1]:
         # Because of Tkinter not allowing RGBA, this shit code exists :)
-        hex_opacity = str(hex(int(255 - hitobject[3] * 255)))[2:]
-        hex_opacity = hex_opacity.zfill(2)
-        outline = "#" + hex_opacity * 3
+        approachcircle_red    = bg_colour[0] + ((approachcircle_base_colour[0] - bg_colour[0]) *
+                                               hitobject[3])
+        approachcircle_red    = str(hex(int(approachcircle_red)))[2:].zfill(2)
+        approachcircle_green  = bg_colour[1] + ((approachcircle_base_colour[1] - bg_colour[1]) *
+                                               hitobject[3])
+        approachcircle_green  = str(hex(int(approachcircle_green)))[2:].zfill(2)
+        approachcircle_blue   = bg_colour[2] + ((approachcircle_base_colour[2] - bg_colour[2]) *
+                                               hitobject[3])
+        approachcircle_blue   = str(hex(int(approachcircle_blue)))[2:].zfill(2)
+
+        approachcircle_colour = "#{}{}{}".format(approachcircle_red, approachcircle_green, approachcircle_blue)
 
         map_canvas.create_oval(hitobject[0] + hitobject[2] + offset_x, hitobject[1] + hitobject[2] + offset_y,
                                hitobject[0] - hitobject[2] + offset_x, hitobject[1] - hitobject[2] + offset_y,
-                               fill="", outline=outline, width=2)
+                               fill="", outline=approachcircle_colour, width=2)
 
     # Draw cursor, cursor trail
     cursor_radius     = 12
@@ -212,6 +220,7 @@ Tk().withdraw()
 
 osr_file_path = filedialog.askopenfilename(title="Select an osr file", filetypes=(("osr files", "*.osr"),))
 osu_file_path = filedialog.askopenfilename(title="Select an osu file", filetypes=(("osu files", "*.osu"),))
+print("loading/parsing files [1/4]")
 osu_file      = open(osu_file_path, 'r', encoding="utf-8")
 osu_lines     = [line.rstrip('\n') for line in osu_file]
 mp3_name      = beatmap_parser.mp3_name(osu_lines)
@@ -222,13 +231,13 @@ replay_mods  = [str(mod)[4:] for mod in list(replay_file.mod_combination)]
 replay_data  = replay_file.play_data
 replay_times = [i.time_since_previous_action for i in replay_data]
 
+print("creating hitobject data [2/4]")
 speed_multiplier = 1
 
 if "DoubleTime" in replay_mods or "Nightcore" in replay_mods:
     speed_multiplier = 1.5
 if "HalfTime" in replay_mods:
     speed_multiplier = 0.75
-
 hardrock = False
 if "HardRock" in replay_mods:
     hardrock = True
@@ -241,9 +250,11 @@ cumulative_time = [sum(replay_times[:i]) / speed_multiplier for i in range(len(r
 hitobject_list  = beatmap_parser.return_hitobject_data(osu_lines, speed_multiplier, hardrock)
 time_list       = [hitobject_list[2] for hitobject in hitobject_list]
 
-tap_list                      = analyze.find_tap_data(replay_data, speed_multiplier)
-cs_radius                     = beatmap_parser.return_cs_radius(osu_lines, hardrock, easy)
+tap_list  = analyze.find_tap_data(replay_data, speed_multiplier)
+cs_radius = beatmap_parser.return_cs_radius(osu_lines, hardrock, easy)
+print("finding replay tap data [3/4]")
 hitobject_tap_list            = analyze.find_hitobject_tap_data(tap_list, hitobject_list, cs_radius)
+print("finding replay tap error data [4/4]")
 tap_time_list, tap_error_list = analyze.tap_error(hitobject_tap_list, hitobject_list, cs_radius)
 
 mp3 = mutagen.mp3.MP3(mp3_file_path)
@@ -260,6 +271,8 @@ while True:
 
     map_canvas = Canvas(root, width=650, height=550)
     map_canvas.grid(row=2, column=0)
+
+    analyze.graph_tap_error(tap_time_list, tap_error_list)
 
     root.protocol("WM_DELETE_WINDOW", kill)
     root.mainloop()
