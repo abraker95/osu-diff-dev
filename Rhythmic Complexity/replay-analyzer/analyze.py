@@ -110,8 +110,7 @@ def graph_tap_error(time_list, error_list):
 
 # Check if hitcircle needs to be highlighted
 def hitcircle_highlight(hitobject_time, hitobject_list, error_list, highlight_threshold):
-    for i in range(len(hitobject_list)):
-        hitobject = hitobject_list[i]
+    for i, hitobject in enumerate(hitobject_list):
         if hitobject == hitobject_time:
             error = error_list[i]
             if abs(error) > highlight_threshold:

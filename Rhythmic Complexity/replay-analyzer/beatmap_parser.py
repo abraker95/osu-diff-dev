@@ -103,12 +103,8 @@ def stacked_notes(hitobjects):
     hitobjects_stack_info = [[i] + [0] for i in hitobjects[::-1]]
     final_hitobject_list  = []
 
-    for i in range(len(hitobjects_stack_info)):
-        hitobject1 = hitobjects_stack_info[i]
-
-        for j in range(len(hitobjects_stack_info)):
-            hitobject2 = hitobjects_stack_info[j]
-
+    for i, hitobject1 in enumerate(hitobjects_stack_info):
+        for j, hitobject2 in enumerate(hitobjects_stack_info):
             in_stack_time_threshold     = not (hitobject2[0][2] < hitobject1[0][2]
                                                or hitobject2[0][2] > hitobject1[0][2] + stack_time_threshold)
             before_stack_time_threshold = hitobject2[0][2] < hitobject1[0][2]
