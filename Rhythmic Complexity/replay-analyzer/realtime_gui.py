@@ -12,7 +12,7 @@ from tkinter import *
 
 # Function used to start the map.
 def start_map():
-    global relative_time, delay_timer_line, rate_change_timer_line
+    global relative_time, delay_timer_line, rate_change_timer_line, hiterror_timer_line
 
     relative_time = int(round(time.time() * 1000))
 
@@ -20,6 +20,11 @@ def start_map():
 
     tick()
     draw_map()
+    draw_difficulty_graphs()
+
+    timer_line_colour   = "#00aa00"
+    hiterror_timer_line = hiterror_graph_canvas.create_line(0, 0, 0, 200, fill=timer_line_colour)
+    draw_difficulty_graphs_timers()
 
 # Function used to tick ms counter
 def tick():
@@ -44,16 +49,19 @@ def draw_map():
     closest_data_index = min(range(len(cumulative_time)), key=lambda i: abs(cumulative_time[i]-ms))
 
     # Draw keys pressed
-    replay_pressed     = replay_data[closest_data_index].keys_pressed
-    left_pressed       = False
-    right_pressed      = False
-    left_fill          = "#ff0000"
-    right_fill          = "#ff0000"
+    pressed_colour     = "#00ff00"
+    not_pressed_colour = "#ff0000"
+
+    replay_pressed = replay_data[closest_data_index].keys_pressed
+    left_pressed   = False
+    right_pressed  = False
+    left_fill      = not_pressed_colour
+    right_fill     = not_pressed_colour
 
     if replay_pressed & 0b100 | replay_pressed & 0b1: left_pressed = True
     if replay_pressed & 0b1000 | replay_pressed & 0b10: right_pressed = True
-    if left_pressed: left_fill = "#00ff00"
-    if right_pressed: right_fill = "#00ff00"
+    if left_pressed: left_fill = pressed_colour
+    if right_pressed: right_fill = pressed_colour
 
     map_canvas.create_rectangle(0, 0, 50, 50, fill=left_fill, width=0)
     map_canvas.create_rectangle(50, 0, 100, 50, fill=right_fill, width=0)
@@ -215,12 +223,96 @@ def draw_map():
 def kill():
     sys.exit()
 
+# Function used to draw a graph.
+def draw_full_graph(canvas, x_list, y_list):
+    global ms, timer_line
+
+    width  = canvas.winfo_width()
+    height = canvas.winfo_height()
+
+    max_y = max(y_list)
+
+    # Separate list into multiple lists when breaks exist.
+    time_break_separated_list = [[]]
+    list_number = 0
+    for i in range(len(x_list) - 1):
+        if x_list[i + 1] - x_list[i] > 3000:
+            # Create new list.
+            list_number += 1
+            time_break_separated_list.append([])
+        time_break_separated_list[list_number].append(x_list[i])
+
+    # Coordinates to be later used in the canvas.
+    canvas_x_list = []
+    canvas_y_list = []
+
+    # Calculating coordinates.
+    for i in x_list:
+        canvas_x_list.append(width * (i - x_list[0]) / (x_list[-1] - x_list[0]))
+    for i in y_list:
+        canvas_y_list.append(height - i * (height/max_y))
+
+    canvas.create_rectangle(0, 0, width, height, fill="#dddddd")
+    canvas.create_line(0, height*0.2, width, height*0.2, fill="#cccccc")
+    canvas.create_line(0, height*0.4, width, height*0.4, fill="#cccccc")
+    canvas.create_line(0, height*0.6, width, height*0.6, fill="#cccccc")
+    canvas.create_line(0, height*0.8, width, height*0.8, fill="#cccccc")
+    canvas.create_line(width*0.2, 0, width*0.2, height, fill="#cccccc")
+    canvas.create_line(width*0.4, 0, width*0.4, height, fill="#cccccc")
+    canvas.create_line(width*0.6, 0, width*0.6, height, fill="#cccccc")
+    canvas.create_line(width*0.8, 0, width*0.8, height, fill="#cccccc")
+
+    # Draw blue line graph, difficulty.
+    for i in range(len(y_list) - 1):
+        # Don't continue the graph if there is a break.
+        if x_list[i + 1] - x_list[i] < 3000:
+            canvas.create_line(canvas_x_list[i], canvas_y_list[i],
+                               canvas_x_list[i + 1], canvas_y_list[i + 1],
+                               fill="#9999ff")
+
+    # Draw red line graph, the moving average.
+    average_values = 20
+    for n in range(len(time_break_separated_list)):
+        for x in range(len(time_break_separated_list[n]) - average_values):
+            if n == 0:
+                i = x
+            else:
+                i = x + sum([len(i) for i in time_break_separated_list[:n]])
+
+            # Don't continue graph if there's a break.
+            if x_list[i + 1 + int(average_values/2)] - x_list[i + int(average_values/2)] < 3000:
+                canvas.create_line(canvas_x_list[i + int(average_values/2)],
+                                   sum(canvas_y_list[i:i + average_values]) / average_values,
+                                   canvas_x_list[i + 1 + int(average_values/2)],
+                                   sum(canvas_y_list[i + 1:i + average_values+1]) / average_values,
+                                   fill="#990000")
+
+# Function used to draw the graph timer.
+def draw_full_graph_timer(canvas, ms, x_list, timer_line):
+    width  = canvas.winfo_width()
+    height = canvas.winfo_height()
+
+    if ms < x_list[-1]:
+        draw_x = width * (ms - x_list[0]) / (x_list[-1] - x_list[0])
+        canvas.coords(timer_line, draw_x, 0, draw_x, height)
+
+# Draw difficulty graphs.
+def draw_difficulty_graphs():
+    draw_full_graph(hiterror_graph_canvas, tap_time_list, absolute_tap_error_list)
+
+# Draw difficulty graphs' timers.
+def draw_difficulty_graphs_timers():
+    global ms, hiterror_timer_line
+
+    draw_full_graph_timer(hiterror_graph_canvas, ms, tap_time_list, hiterror_timer_line)
+
+    time_label.after(30, draw_difficulty_graphs_timers)
 
 Tk().withdraw()
 
 osr_file_path = filedialog.askopenfilename(title="Select an osr file", filetypes=(("osr files", "*.osr"),))
 osu_file_path = filedialog.askopenfilename(title="Select an osu file", filetypes=(("osu files", "*.osu"),))
-print("loading/parsing files [1/4]")
+print("loading/parsing files [1/5]")
 osu_file      = open(osu_file_path, 'r', encoding="utf-8")
 osu_lines     = [line.rstrip('\n') for line in osu_file]
 mp3_name      = beatmap_parser.mp3_name(osu_lines)
@@ -231,7 +323,7 @@ replay_mods  = [str(mod)[4:] for mod in list(replay_file.mod_combination)]
 replay_data  = replay_file.play_data
 replay_times = [i.time_since_previous_action for i in replay_data]
 
-print("creating hitobject data [2/4]")
+print("creating hitobject data [2/5]")
 speed_multiplier = 1
 
 if "DoubleTime" in replay_mods or "Nightcore" in replay_mods:
@@ -252,10 +344,11 @@ time_list       = [hitobject_list[2] for hitobject in hitobject_list]
 
 tap_list  = analyze.find_tap_data(replay_data, speed_multiplier)
 cs_radius = beatmap_parser.return_cs_radius(osu_lines, hardrock, easy)
-print("finding replay tap data [3/4]")
+print("finding replay tap data [4/5]")
 hitobject_tap_list            = analyze.find_hitobject_tap_data(tap_list, hitobject_list, cs_radius)
-print("finding replay tap error data [4/4]")
+print("finding replay tap error data [5/5]")
 tap_time_list, tap_error_list = analyze.tap_error(hitobject_tap_list, hitobject_list, cs_radius)
+absolute_tap_error_list       = [abs(i) for i in tap_error_list]
 
 mp3 = mutagen.mp3.MP3(mp3_file_path)
 pygame.mixer.init(frequency=int(mp3.info.sample_rate * speed_multiplier))
@@ -264,13 +357,18 @@ pygame.mixer.music.load(mp3_file_path)
 while True:
     root = Tk()
 
-    Button(root, fg="blue", text="Start Realtime!", command=start_map).grid(row=0, column=0)
+    Button(root, fg="blue", text="Start Realtime!", command=start_map).grid(row=0, column=1)
 
     time_label = Label(root, fg="black")
-    time_label.grid(row=1, column=0)
+    time_label.grid(row=1, column=1)
 
     map_canvas = Canvas(root, width=650, height=550)
-    map_canvas.grid(row=2, column=0)
+    map_canvas.grid(row=2, column=1, rowspan=2)
+
+    Label(root, fg="black", text="Player Absolute Hit Error").grid(row=2, column=0)
+
+    hiterror_graph_canvas = Canvas(root, width=600, height=200)
+    hiterror_graph_canvas.grid(row=3, column=0)
 
     analyze.graph_tap_error(tap_time_list, tap_error_list)
 

@@ -58,6 +58,8 @@ def return_hitobject_data(lines, speed_multiplier, hardrock):
 
         if not (int(hitobject_comma_split[3]) & 0b1000): hitobject_data_list.append((x, y, time))
 
+    print("stacking hitobjects [3/5]")
+
     hitobject_data_list = stacked_notes(hitobject_data_list)
 
     return hitobject_data_list
